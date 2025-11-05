@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Briefcase, Users, Search, Filter } from "lucide-react";
+import { User, Briefcase, Users, Search } from "lucide-react";
 import ComponentCard from "@/components/common/ComponentCard";
 
 export default function ManageUsersPage() {

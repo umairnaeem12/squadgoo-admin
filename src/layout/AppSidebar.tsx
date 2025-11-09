@@ -50,17 +50,6 @@ const navItems: NavItem[] = [
   //   // subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
   //   path: "/basic-tables",
   // },
-  {
-    name: "Support Ticket",
-    icon: <TableIcon />,
-    // subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-    path: "/support-tickets",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
-  },
   // {
   //   name: "Pages",
   //   icon: <PageIcon />,
@@ -71,34 +60,88 @@ const navItems: NavItem[] = [
   // },
 ];
 
+
+const jobSekeersItems: NavItem[] = [
+  {
+    name: "Jobseeker",
+    icon: <TableIcon />,
+    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
+    path: "/JobseekerDirectory",
+  },
+  {
+    name: "Applicants",
+    icon: <TableIcon />,
+    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
+    path: "/ApplicationsReview",
+  },
+  {
+    name: "Group",
+    icon: <TableIcon />,
+    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
+    path: "/GroupManagement",
+  },
+];
+
+const settingItems: NavItem[] = [
+  {
+    name: "Support Ticket",
+    icon: <TableIcon />,
+    // subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+    path: "/support-tickets",
+  },
+  {
+    name: "Plans & Payments",
+    icon: <TableIcon />,
+    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
+    path: "/PlansAndPayments",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "User Profile",
+    path: "/profile",
+  },
+];
+
 const othersItems: NavItem[] = [
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Charts",
+  //   subItems: [
+  //     { name: "Line Chart", path: "/line-chart", pro: false },
+  //     { name: "Bar Chart", path: "/bar-chart", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "UI Elements",
+  //   subItems: [
+  //     { name: "Alerts", path: "/alerts", pro: false },
+  //     { name: "Avatar", path: "/avatars", pro: false },
+  //     { name: "Badge", path: "/badge", pro: false },
+  //     { name: "Buttons", path: "/buttons", pro: false },
+  //     { name: "Images", path: "/images", pro: false },
+  //     { name: "Videos", path: "/videos", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <PlugInIcon />,
+  //   name: "Authentication",
+  //   subItems: [
+  //     { name: "Sign In", path: "/signin", pro: false },
+  //     { name: "Sign Up", path: "/signup", pro: false },
+  //   ],
+  // },
   {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
+    name: "Recruiter",
+    icon: <TableIcon />,
+    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
+    path: "/RecruiterDirectory",
   },
   {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
+    name: "Job Posts",
+    icon: <TableIcon />,
+    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
+    path: "/JobPostManagement",
   },
 ];
 
@@ -110,7 +153,7 @@ const AppSidebar: React.FC = () => {
     navItems: NavItem[],
     menuType: "main" | "others"
   ) => (
-    <ul className="flex flex-col gap-4">
+    <ul className="flex flex-col gap-0">
       {navItems.map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
@@ -372,7 +415,7 @@ const AppSidebar: React.FC = () => {
               {renderMenuItems(navItems, "main")}
             </div>
 
-            {/* <div className="">
+            <div className="">
               <h2
                 className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
                   ? "lg:justify-center"
@@ -380,13 +423,46 @@ const AppSidebar: React.FC = () => {
                   }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
+                  "Recruiter"
                 ) : (
                   <HorizontaLDots />
                 )}
               </h2>
               {renderMenuItems(othersItems, "others")}
-            </div> */}
+            </div>
+
+            <div className="">
+              <h2
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
+                  ? "lg:justify-center"
+                  : "justify-start"
+                  }`}
+              >
+                {isExpanded || isHovered || isMobileOpen ? (
+                  "Job Seekers"
+                ) : (
+                  <HorizontaLDots />
+                )}
+              </h2>
+              {renderMenuItems(jobSekeersItems, "others")}
+            </div>
+
+            <div className="">
+              <h2
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
+                  ? "lg:justify-center"
+                  : "justify-start"
+                  }`}
+              >
+                {isExpanded || isHovered || isMobileOpen ? (
+                  "Support & Settings"
+                ) : (
+                  <HorizontaLDots />
+                )}
+              </h2>
+              {renderMenuItems(settingItems, "others")}
+            </div>
+
           </div>
         </nav>
         {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}

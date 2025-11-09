@@ -9,7 +9,6 @@ export default function SupportTicketsPage() {
     const [showFilterBox, setShowFilterBox] = useState(false);
     const filterRef = useRef<HTMLDivElement | null>(null);
 
-    // Close the filter dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
@@ -20,7 +19,6 @@ export default function SupportTicketsPage() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Mock data
     const tickets = [
         {
             id: "#323534",
@@ -69,76 +67,80 @@ export default function SupportTicketsPage() {
 
     return (
         <div className="p-2 md:p-4 space-y-4">
-            {/* ==== PAGE TITLE ==== */}
+            {/* Page Title */}
             <p className="text-xl font-semibold text-gray-900 dark:text-white">
                 Support Tickets
             </p>
 
-            {/* ==== STATS CARDS ==== */}
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <StatCard
-                    icon={<Inbox className="w-8 h-8 text-blue-500" />}
+                    icon={<Inbox className="w-8 h-8 text-brand-500" />}
                     label="Total tickets"
                     value="5,347"
                 />
                 <StatCard
-                    icon={<Clock className="w-8 h-8 text-yellow-500" />}
+                    icon={<Clock className="w-8 h-8 text-warning-500" />}
                     label="Pending tickets"
                     value="1,230"
                 />
                 <StatCard
-                    icon={<BadgeCheck className="w-8 h-8 text-green-500" />}
+                    icon={<BadgeCheck className="w-8 h-8 text-success-500" />}
                     label="Solved tickets"
                     value="4,117"
                 />
             </div>
 
-            {/* ==== MAIN TABLE CARD ==== */}
+            {/* Main Table */}
             <ComponentCard
                 title="Support Tickets"
                 desc="Your most recent support tickets list"
+                className="bg-white dark:bg-gray-dark border border-gray-200 dark:border-gray-800"
                 headerRight={
                     <div className="flex flex-wrap items-center justify-end gap-2 relative">
                         {/* Filter Buttons */}
-                        <div className="flex rounded-lg border border-gray-200 dark:border-darkblack-500 overflow-hidden">
-                            {["all", "solved", "pending"].map((f) => (
+                        <div className="inline-flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
+                            {[
+                                { key: "all", label: "All", icon: "" },
+                                { key: "solved", label: "Solved", icon: "" },
+                                { key: "pending", label: "Pending", icon: "" }
+                            ].map(({ key, label, icon }) => (
                                 <button
-                                    key={f}
-                                    onClick={() => setFilter(f as any)}
-                                    className={`px-4 py-2 text-sm font-medium transition ${filter === f
-                                            ? "bg-gray-100 dark:bg-darkblack-500 text-blue-600"
-                                            : "text-gray-700 dark:text-gray-300"
+                                    key={key}
+                                    onClick={() => setFilter(key as any)}
+                                    className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${filter === key
+                                            ? "bg-white dark:bg-gray-700 text-brand-600 dark:text-brand-400 shadow-sm"
+                                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                                         }`}
                                 >
-                                    {f[0].toUpperCase() + f.slice(1)}
+                                    <span className="text-sm">{icon}</span>
+                                    {label}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Search + Filter */}
+                        {/* Search & Filter */}
                         <div className="flex items-center gap-2" ref={filterRef}>
                             <input
                                 type="text"
                                 placeholder="Search..."
-                                className="border border-gray-200 dark:border-darkblack-500 rounded-lg px-3 py-2 text-sm bg-white dark:bg-darkblack-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                             />
                             <button
                                 onClick={() => setShowFilterBox((prev) => !prev)}
                                 className="flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium 
-             border-gray-200 dark:border-darkblack-500 
-             text-gray-700 dark:text-gray-300 
-             hover:bg-gray-100 dark:hover:bg-darkblack-500 
-             transition relative"
+                  border-gray-200 dark:border-gray-800 
+                  text-gray-700 dark:text-gray-300 
+                  hover:bg-gray-100 dark:hover:bg-white/5 
+                  transition relative"
                             >
                                 <Filter className="w-4 h-4" />
                                 <span>Filter</span>
                             </button>
 
-                            {/* === Floating Filter Box === */}
+                            {/* Floating Filter Box */}
                             {showFilterBox && (
-                                <div
-                                    className="absolute right-0 top-12 w-64 bg-white dark:bg-darkblack-600 rounded-xl shadow-lg border border-gray-200 dark:border-darkblack-500 p-4 z-10"
-                                >
+                                <div className="absolute right-0 top-12 w-64 bg-white dark:bg-gray-dark rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 z-10">
                                     <div className="space-y-3">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -147,7 +149,7 @@ export default function SupportTicketsPage() {
                                             <input
                                                 type="text"
                                                 placeholder="Search category..."
-                                                className="w-full border border-gray-200 dark:border-darkblack-500 rounded-lg px-3 py-2 text-sm bg-white dark:bg-darkblack-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                className="w-full border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                                             />
                                         </div>
 
@@ -158,13 +160,13 @@ export default function SupportTicketsPage() {
                                             <input
                                                 type="text"
                                                 placeholder="Search company..."
-                                                className="w-full border border-gray-200 dark:border-darkblack-500 rounded-lg px-3 py-2 text-sm bg-white dark:bg-darkblack-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                className="w-full border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-brand-500 focus:outline-none"
                                             />
                                         </div>
 
                                         <button
                                             onClick={() => setShowFilterBox(false)}
-                                            className="w-full mt-2 bg-blue-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition"
+                                            className="w-full mt-2 bg-brand-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-brand-700 transition"
                                         >
                                             Apply
                                         </button>
@@ -175,10 +177,10 @@ export default function SupportTicketsPage() {
                     </div>
                 }
             >
-                {/* ==== TABLE ==== */}
+                {/* Table */}
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 dark:bg-darkblack-500 text-gray-600 dark:text-gray-300">
+                        <thead className="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
                             <tr>
                                 <th className="px-6 py-3 font-medium">Ticket ID</th>
                                 <th className="px-6 py-3 font-medium">Requested By</th>
@@ -187,28 +189,36 @@ export default function SupportTicketsPage() {
                                 <th className="px-6 py-3 font-medium">Status</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                             {filteredTickets.map((t, i) => (
                                 <tr
                                     key={i}
-                                    className="border-t border-gray-100 dark:border-darkblack-500 hover:bg-gray-50 dark:hover:bg-darkblack-500"
+                                    className="hover:bg-gray-50 dark:hover:bg-white/5 transition"
                                 >
-                                    <td className="px-6 py-3">{t.id}</td>
+                                    <td className="px-6 py-3 text-gray-800 dark:text-gray-200">
+                                        {t.id}
+                                    </td>
                                     <td className="px-6 py-3">
                                         <div>
                                             <p className="font-medium text-gray-900 dark:text-white">
                                                 {t.name}
                                             </p>
-                                            <p className="text-gray-500 text-xs">{t.email}</p>
+                                            <p className="text-gray-500 dark:text-gray-400 text-xs">
+                                                {t.email}
+                                            </p>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-3">{t.subject}</td>
-                                    <td className="px-6 py-3">{t.date}</td>
+                                    <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
+                                        {t.subject}
+                                    </td>
+                                    <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
+                                        {t.date}
+                                    </td>
                                     <td className="px-6 py-3">
                                         <span
                                             className={`px-3 py-1 text-xs font-medium rounded-full ${t.status === "solved"
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-yellow-100 text-yellow-700"
+                                                ? "bg-success-50 dark:bg-success-500/15 text-success-700 dark:text-success-400"
+                                                : "bg-warning-50 dark:bg-warning-500/15 text-warning-700 dark:text-warning-400"
                                                 }`}
                                         >
                                             {t.status[0].toUpperCase() + t.status.slice(1)}
@@ -224,7 +234,7 @@ export default function SupportTicketsPage() {
     );
 }
 
-/* === Small Subcomponent for Stat Cards === */
+/* === Stat Card === */
 const StatCard = ({
     icon,
     label,
@@ -234,12 +244,14 @@ const StatCard = ({
     label: string;
     value: string;
 }) => (
-    <div className="bg-white dark:bg-darkblack-600 rounded-xl p-5 border border-gray-200 dark:border-darkblack-500 shadow-sm">
+    <div className="bg-white dark:bg-gray-dark rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-theme-sm transition">
         <div className="flex items-center gap-3">
             {icon}
             <div>
-                <p className="text-gray-500 text-sm">{label}</p>
-                <h2 className="text-2xl font-bold">{value}</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">{label}</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {value}
+                </h2>
             </div>
         </div>
     </div>

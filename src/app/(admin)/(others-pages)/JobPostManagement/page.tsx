@@ -11,6 +11,12 @@ import {
   Users,
   FileText,
   Search,
+  Clock,
+  GraduationCap,
+  Globe,
+  UserCheck,
+  Layers,
+  Languages,
 } from "lucide-react";
 
 export default function JobPostManagement() {
@@ -22,12 +28,25 @@ export default function JobPostManagement() {
       title: "Frontend Developer",
       company: "TalentMatch HR",
       recruiter: "John Doe",
-      location: "San Francisco, USA",
-      salaryRange: "$70k - $90k",
+      industry: "Technology",
+      workLocation: "San Francisco, USA",
+      rangeKm: "15",
+      totalExperience: "3 Years",
+      salaryRange: "$70k - $90k / year",
+      jobType: "Full-Time",
+      staffRequired: 2,
+      availability: "Immediate",
+      language: "English",
       applicants: 42,
       postedOn: "05 Feb, 2025",
       status: "Active",
-      type: "Full-Time",
+      qualifications: ["Bachelor’s in Computer Science", "High School Diploma"],
+      extraQualifications: ["Tailwind, TypeScript, Next.js"],
+      startDate: "10 Feb, 2025",
+      startTime: "09:00 AM",
+      endDate: "10 Aug, 2025",
+      endTime: "05:00 PM",
+      offerExpiry: "120 mins",
       description:
         "We are seeking a skilled Frontend Developer with strong experience in React, Next.js, and Tailwind CSS to join our growing team. You’ll collaborate closely with designers and backend developers to create highly interactive user interfaces.",
       requirements: [
@@ -41,37 +60,31 @@ export default function JobPostManagement() {
       title: "Product Manager",
       company: "TechBridge Recruiters",
       recruiter: "Sarah Malik",
-      location: "London, UK",
-      salaryRange: "$85k - $110k",
+      industry: "Finance",
+      workLocation: "London, UK",
+      rangeKm: "10",
+      totalExperience: "5 Years",
+      salaryRange: "$85k - $110k / year",
+      jobType: "Remote",
+      staffRequired: 1,
+      availability: "Next Week",
+      language: "English",
       applicants: 18,
       postedOn: "18 Mar, 2025",
       status: "Pending",
-      type: "Remote",
+      qualifications: ["Master’s in Business Management"],
+      extraQualifications: ["Agile Certification", "Scrum Master"],
+      startDate: "01 Apr, 2025",
+      startTime: "10:00 AM",
+      endDate: "30 Dec, 2025",
+      endTime: "06:00 PM",
+      offerExpiry: "240 mins",
       description:
         "Looking for an experienced Product Manager to drive cross-functional product initiatives in our FinTech division. You will be leading agile product teams and overseeing product life cycles from conception to delivery.",
       requirements: [
         "5+ years of experience in product management",
         "Excellent leadership and strategic planning skills",
         "Experience with agile methodologies",
-      ],
-    },
-    {
-      id: 3,
-      title: "UI/UX Designer",
-      company: "CreativeX Studio",
-      recruiter: "Ali Raza",
-      location: "Toronto, Canada",
-      salaryRange: "$60k - $80k",
-      applicants: 29,
-      postedOn: "25 Apr, 2025",
-      status: "Closed",
-      type: "Contract",
-      description:
-        "CreativeX Studio is seeking a talented UI/UX Designer who can transform user requirements into intuitive and visually appealing designs. Experience with Figma, Adobe XD, and component-based design systems is a must.",
-      requirements: [
-        "2+ years of professional design experience",
-        "Proficiency with Figma and Adobe XD",
-        "Portfolio of completed design projects",
       ],
     },
   ];
@@ -101,8 +114,8 @@ export default function JobPostManagement() {
         }
       >
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead className="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-800">
               <tr>
                 <th className="px-6 py-3 font-medium">Job Title</th>
                 <th className="px-6 py-3 font-medium">Company</th>
@@ -118,7 +131,7 @@ export default function JobPostManagement() {
                 <tr
                   key={job.id}
                   onClick={() => setSelectedJob(job)}
-                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200"
                 >
                   <td className="px-6 py-3 font-medium text-gray-900 dark:text-white">
                     {job.title}
@@ -130,7 +143,7 @@ export default function JobPostManagement() {
                     {job.recruiter}
                   </td>
                   <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
-                    {job.location}
+                    {job.workLocation}
                   </td>
                   <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
                     {job.applicants}
@@ -166,7 +179,7 @@ export default function JobPostManagement() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-gray-dark border border-gray-200 dark:border-gray-800 rounded-2xl p-6 w-full max-w-2xl shadow-theme-lg"
+            className="bg-white dark:bg-gray-dark border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-3xl shadow-theme-lg p-6 overflow-y-auto max-h-[85vh]"
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
@@ -179,48 +192,84 @@ export default function JobPostManagement() {
                     {selectedJob.title}
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {selectedJob.company} • {selectedJob.location}
+                    {selectedJob.company} • {selectedJob.workLocation}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Job Info */}
-            <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300 mb-4">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4" /> {selectedJob.recruiter}
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" /> Posted {selectedJob.postedOn}
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4" /> {selectedJob.salaryRange}
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" /> {selectedJob.applicants} Applicants
+            {/* === Job Overview === */}
+            <div className="border-b border-gray-200 dark:border-gray-800 pb-4 mb-4">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Job Overview
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+                <p><strong>Industry:</strong> {selectedJob.industry}</p>
+                <p><strong>Job Type:</strong> {selectedJob.jobType}</p>
+                <p><strong>Staff Required:</strong> {selectedJob.staffRequired}</p>
+                <p><strong>Availability:</strong> {selectedJob.availability}</p>
+                <p><strong>Experience:</strong> {selectedJob.totalExperience}</p>
+                <p><strong>Language:</strong> {selectedJob.language}</p>
               </div>
             </div>
 
-            {/* Description */}
+            {/* === Schedule & Payment === */}
+            <div className="border-b border-gray-200 dark:border-gray-800 pb-4 mb-4">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                <Calendar className="w-4 h-4" /> Schedule & Payment
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+                <p><strong>Start Date:</strong> {selectedJob.startDate}</p>
+                <p><strong>Start Time:</strong> {selectedJob.startTime}</p>
+                <p><strong>End Date:</strong> {selectedJob.endDate}</p>
+                <p><strong>End Time:</strong> {selectedJob.endTime}</p>
+                <p><strong>Offer Expiry:</strong> {selectedJob.offerExpiry}</p>
+                <p><strong>Salary Range:</strong> {selectedJob.salaryRange}</p>
+              </div>
+            </div>
+
+            {/* === Qualifications === */}
+            <div className="border-b border-gray-200 dark:border-gray-800 pb-4 mb-4">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                <GraduationCap className="w-4 h-4" /> Qualifications
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 dark:text-gray-300">
+                <div>
+                  <p className="font-medium mb-1">Educational:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {selectedJob.qualifications.map((q: string, i: number) => (
+                      <li key={i}>{q}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium mb-1">Extra:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {selectedJob.extraQualifications.map(
+                      (q: string, i: number) => <li key={i}>{q}</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* === Description & Requirements === */}
             <div>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-2">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Job Description & Requirements
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
                 {selectedJob.description}
               </p>
-
-              <div className="mt-3">
-                <p className="font-medium text-gray-800 dark:text-gray-200 mb-1">
-                  Requirements:
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400">
-                  {selectedJob.requirements.map((req: string, i: number) => (
-                    <li key={i}>{req}</li>
-                  ))}
-                </ul>
-              </div>
+              <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400">
+                {selectedJob.requirements.map((req: string, i: number) => (
+                  <li key={i}>{req}</li>
+                ))}
+              </ul>
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-end mt-6 border-t border-gray-200 dark:border-gray-800 pt-4">
               <button
                 onClick={() => setSelectedJob(null)}
                 className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300"

@@ -99,6 +99,25 @@ export default function ApplicationsReview() {
         Applications / Resume / Portfolio Review
       </p>
 
+      {/* High-level review metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <SummaryCard
+          label="Quick vs Manual jobs"
+          value="64% Quick · 36% Manual"
+          helper="Last 30 days across all applications"
+        />
+        <SummaryCard
+          label="Average rating"
+          value="4.3 / 5.0"
+          helper="Based on completed jobs linked to these applicants"
+        />
+        <SummaryCard
+          label="Flagged / low acceptance profiles"
+          value="12 profiles"
+          helper="Require admin review from Reports & Reviews"
+        />
+      </div>
+
       {/* Table */}
       <ComponentCard
         title="All Applications"
@@ -326,6 +345,30 @@ export default function ApplicationsReview() {
             </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+type SummaryCardProps = {
+  label: string;
+  value: string;
+  helper?: string;
+};
+
+function SummaryCard({ label, value, helper }: SummaryCardProps) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-900">
+      <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+        {label}
+      </p>
+      <p className="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+        {value}
+      </p>
+      {helper && (
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {helper}
+        </p>
       )}
     </div>
   );

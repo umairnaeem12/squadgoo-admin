@@ -63,19 +63,19 @@ const navItems: NavItem[] = [
 
 const jobSekeersItems: NavItem[] = [
   {
-    name: "Jobseeker",
+    name: "Jobseekers",
     icon: <TableIcon />,
     // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
     path: "/JobseekerDirectory",
   },
   {
-    name: "Applicants",
+    name: "Reports & Reviews",
     icon: <TableIcon />,
     // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
     path: "/ApplicationsReview",
   },
   {
-    name: "Group",
+    name: "Squad Accounts",
     icon: <TableIcon />,
     // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
     path: "/GroupManagement",
@@ -84,13 +84,13 @@ const jobSekeersItems: NavItem[] = [
 
 const settingItems: NavItem[] = [
   {
-    name: "Support Ticket",
+    name: "Customer Service",
     icon: <TableIcon />,
     // subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
     path: "/support-tickets",
   },
   {
-    name: "Plans & Payments",
+    name: "Plans & Upgrades",
     icon: <TableIcon />,
     // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
     path: "/PlansAndPayments",
@@ -136,6 +136,12 @@ const othersItems: NavItem[] = [
     icon: <TableIcon />,
     // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
     path: "/RecruiterDirectory",
+  },
+  {
+    name: "Individuals",
+    icon: <TableIcon />,
+    // repurposed from the old blank page route
+    path: "/blank",
   },
   {
     name: "Job Posts",

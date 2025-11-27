@@ -348,6 +348,69 @@ export default function PlansAndPayments() {
           </div>
         </div> */}
       </ComponentCard>
+
+      {/* === Section 3: Account Upgrades & Extras (Admin View) === */}
+      <ComponentCard
+        title="Account Upgrades & Extra Purchases"
+        desc="High-level summary of jobseeker and recruiter badge tiers and extra verification services"
+        className="border-0 shadow-lg dark:shadow-xl dark:shadow-black/20"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BadgeDollarSign className="w-5 h-5 text-brand-500" />
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Jobseeker Badges
+                </p>
+              </div>
+              <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                Bronze · Platinum · Gold
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Configure eligibility and pricing for jobseeker badge tiers. Badges unlock in‑platform
+              payments, better cancellation protection and improved visibility in search.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-brand-500" />
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Recruiter Badges
+                </p>
+              </div>
+              <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                Bronze · Platinum · Gold
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Badge upgrades for recruiter accounts unlock squad hiring, in‑app payments and fee
+              discounts. Use this area to connect pricing to your SG Coin economy later.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-brand-500" />
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Resume / PRO Checks
+                </p>
+              </div>
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                +50 SG / verification
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Extra paid services such as resume verification or PRO‑level due diligence for
+              recruiters. These purchases surface as invoices above and increase platform revenue.
+            </p>
+          </div>
+        </div>
+      </ComponentCard>
     </div>
   );
 }

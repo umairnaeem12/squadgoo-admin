@@ -1,11 +1,66 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { BadgeCheck, Clock, Inbox, Filter } from "lucide-react";
+import {
+    AlertTriangle,
+    BadgeCheck,
+    Clock,
+    Filter,
+    Gavel,
+    Inbox,
+    MessageCircle,
+    Scale,
+} from "lucide-react";
 import ComponentCard from "@/components/common/ComponentCard";
 
+type TicketStatus = "all" | "solved" | "pending";
+
+type Dispute = {
+    id: string;
+    type: "Job" | "Marketplace";
+    raisedBy: string;
+    against: string;
+    reason: string;
+    status: "Open" | "In Review" | "Resolved";
+    amountHold: number;
+    createdAt: string;
+};
+
+const DISPUTES: Dispute[] = [
+    {
+        id: "DSP-9001",
+        type: "Job",
+        raisedBy: "Rakesh Sharma (Jobseeker)",
+        against: "TalentMatch HR (Recruiter)",
+        reason: "Quick job ended early but full hours not paid",
+        status: "In Review",
+        amountHold: 180,
+        createdAt: "10 Feb, 2025",
+    },
+    {
+        id: "DSP-9002",
+        type: "Marketplace",
+        raisedBy: "Mia Collins (Buyer)",
+        against: "Shehroz Motors (Seller)",
+        reason: "Item not as described – motorbike mechanical issues",
+        status: "Open",
+        amountHold: 5000,
+        createdAt: "18 Feb, 2025",
+    },
+    {
+        id: "DSP-9003",
+        type: "Job",
+        raisedBy: "Squad Courier",
+        against: "Rakesh Sharma (Buyer)",
+        reason: "Courier completed delivery but buyer disputes distance",
+        status: "Resolved",
+        amountHold: 90,
+        createdAt: "02 Feb, 2025",
+    },
+];
+
 export default function SupportTicketsPage() {
-    const [filter, setFilter] = useState<"all" | "solved" | "pending">("all");
+    const [filter, setFilter] = useState<TicketStatus>("all");
     const [showFilterBox, setShowFilterBox] = useState(false);
     const filterRef = useRef<HTMLDivElement | null>(null);
 
@@ -89,9 +144,14 @@ export default function SupportTicketsPage() {
                     label="Solved tickets"
                     value="4,117"
                 />
+                <StatCard
+                    icon={<Scale className="w-8 h-8 text-error-500" />}
+                    label="Open disputes (jobs & marketplace)"
+                    value="23"
+                />
             </div>
 
-            {/* Main Table */}
+            {/* Main Table – Customer Service */}
             <ComponentCard
                 title="Support Tickets"
                 desc="Your most recent support tickets list"
@@ -107,7 +167,7 @@ export default function SupportTicketsPage() {
                             ].map(({ key, label, icon }) => (
                                 <button
                                     key={key}
-                                    onClick={() => setFilter(key as any)}
+                                    onClick={() => setFilter(key as TicketStatus)}
                                     className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${filter === key
                                             ? "bg-white dark:bg-gray-700 text-brand-600 dark:text-brand-400 shadow-sm"
                                             : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -115,8 +175,8 @@ export default function SupportTicketsPage() {
                                 >
                                     <span className="text-sm">{icon}</span>
                                     {label}
-                                </button>
-                            ))}
+                                        </button>
+                                    ))}
                         </div>
 
                         {/* Search & Filter */}
@@ -223,6 +283,91 @@ export default function SupportTicketsPage() {
                                         >
                                             {t.status[0].toUpperCase() + t.status.slice(1)}
                                         </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </ComponentCard>
+
+            {/* Dispute Resolution Centre – Admin view */}
+            <ComponentCard
+                title="Dispute Resolution Centre"
+                desc="Track job and marketplace disputes, SG Coin holds and mediator activity"
+                className="bg-white dark:bg-gray-dark border border-gray-200 dark:border-gray-800"
+            >
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
+                            <tr>
+                                <th className="px-6 py-3 font-medium">Case</th>
+                                <th className="px-6 py-3 font-medium">Type</th>
+                                <th className="px-6 py-3 font-medium">Raised by</th>
+                                <th className="px-6 py-3 font-medium">Against</th>
+                                <th className="px-6 py-3 font-medium">Reason</th>
+                                <th className="px-6 py-3 font-medium">Amount on hold</th>
+                                <th className="px-6 py-3 font-medium">Status</th>
+                                <th className="px-6 py-3 font-medium">Created</th>
+                                <th className="px-6 py-3 font-medium">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            {DISPUTES.map((d) => (
+                                <tr
+                                    key={d.id}
+                                    className="hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                                >
+                                    <td className="px-6 py-3 text-gray-800 dark:text-gray-200">
+                                        {d.id}
+                                    </td>
+                                    <td className="px-6 py-3 text-xs">
+                                        <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                            {d.type}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
+                                        {d.raisedBy}
+                                    </td>
+                                    <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
+                                        {d.against}
+                                    </td>
+                                    <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
+                                        {d.reason}
+                                    </td>
+                                    <td className="px-6 py-3 text-gray-800 dark:text-gray-200">
+                                        {d.amountHold.toLocaleString()} SG
+                                    </td>
+                                    <td className="px-6 py-3">
+                                        <span
+                                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
+                                                d.status === "Open"
+                                                    ? "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300"
+                                                    : d.status === "In Review"
+                                                    ? "bg-yellow-50 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-300"
+                                                    : "bg-green-50 text-green-700 dark:bg-green-500/15 dark:text-green-300"
+                                            }`}
+                                        >
+                                            {d.status === "Open" && (
+                                                <AlertTriangle className="w-3 h-3" />
+                                            )}
+                                            {d.status === "In Review" && (
+                                                <Scale className="w-3 h-3" />
+                                            )}
+                                            {d.status === "Resolved" && (
+                                                <BadgeCheck className="w-3 h-3" />
+                                            )}
+                                            {d.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-3 text-gray-600 dark:text-gray-300">
+                                        {d.createdAt}
+                                    </td>
+                                    <td className="px-6 py-3">
+                                        <button className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+                                            <MessageCircle className="w-3 h-3" />
+                                            Open case chat
+                                        </button>
                                     </td>
                                 </tr>
                             ))}

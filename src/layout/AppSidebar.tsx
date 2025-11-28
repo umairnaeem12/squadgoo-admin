@@ -30,75 +30,58 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
     path: "/",
   },
-  // {
-  //   icon: <CalenderIcon />,
-  //   name: "Calendar",
-  //   path: "/calendar",
-  // },
-  {
-    name: "Manage Users",
-    icon: <ListIcon />,
-    // subItems: [{ name: "Form Elements", path: "/form-elements", pro: true }],
-    path: "/form-elements",
-  },
-  // {
-  //   name: "Tables",
-  //   icon: <TableIcon />,
-  //   // subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  //   path: "/basic-tables",
-  // },
-  // {
-  //   name: "Pages",
-  //   icon: <PageIcon />,
-  //   subItems: [
-  //     { name: "Blank Page", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
-  //   ],
-  // },
 ];
-
 
 const jobSekeersItems: NavItem[] = [
   {
-    name: "Jobseekers",
-    icon: <TableIcon />,
-    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
-    path: "/JobseekerDirectory",
-  },
-  {
     name: "Reports & Reviews",
     icon: <TableIcon />,
-    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
     path: "/ApplicationsReview",
   },
   {
-    name: "Squad Accounts",
+    name: "Customer Service",
     icon: <TableIcon />,
-    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
-    path: "/GroupManagement",
+    path: "/support-tickets",
+  },
+  {
+    name: "Account Upgrades & Extras",
+    icon: <TableIcon />,
+    path: "/PlansAndPayments",
+  },
+  {
+    name: "Dispute Resolution Centre",
+    icon: <TableIcon />,
+    path: "/DisputeResolution",
+  },
+  {
+    name: "Job Posts",
+    icon: <TableIcon />,
+    path: "/JobPostManagement",
   },
 ];
 
 const settingItems: NavItem[] = [
   {
-    name: "Customer Service",
+    name: "Admin Panel Control",
     icon: <TableIcon />,
-    // subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-    path: "/support-tickets",
+    path: "/AdminPanelControl",
   },
   {
-    name: "Plans & Upgrades",
+    name: "Platform Controls",
     icon: <TableIcon />,
-    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
-    path: "/PlansAndPayments",
+    path: "/PlatformControls",
   },
   {
+    name: "ATO Reports",
+    icon: <TableIcon />,
+    path: "/ATOReports",
+  },
+  {
+    name: "CRM",
     icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
+    path: "/CRM",
   },
 ];
 
@@ -132,22 +115,25 @@ const othersItems: NavItem[] = [
   //   ],
   // },
   {
-    name: "Recruiter",
+    name: "Jobseekers",
     icon: <TableIcon />,
-    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
+    path: "/JobseekerDirectory",
+  },
+  {
+    name: "Recruiters",
+    icon: <TableIcon />,
     path: "/RecruiterDirectory",
   },
   {
     name: "Individuals",
     icon: <TableIcon />,
-    // repurposed from the old blank page route
+    // route folder is still named "blank" but page is Individuals Directory
     path: "/blank",
   },
   {
-    name: "Job Posts",
+    name: "Squad Accounts",
     icon: <TableIcon />,
-    // subItems: [{ name: "Recruiter", path: "/RecruiterDirectory", pro: false }],
-    path: "/JobPostManagement",
+    path: "/GroupManagement",
   },
 ];
 
@@ -336,62 +322,45 @@ const AppSidebar: React.FC = () => {
     });
   };
 
+  const Section = ({
+    title,
+    children,
+  }: {
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <div>
+      <h2
+        className={`mt-2 mb-2 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
+          ? "lg:justify-center"
+          : "justify-start"
+          }`}
+      >
+        {isExpanded || isHovered || isMobileOpen ? title : <HorizontaLDots />}
+      </h2>
+      {children}
+    </div>
+  );
+
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${isExpanded || isMobileOpen
-          ? "w-[290px]"
-          : isHovered
-            ? "w-[290px]"
-            : "w-[90px]"
-        }
-        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0`}
+      className={`z-50 flex flex-col bg-white px-5 py-6 text-gray-900 border-r border-gray-200 transition-all duration-300 ease-in-out dark:bg-gray-900 dark:border-gray-800
+        fixed top-16 left-0 h-[calc(100vh-4rem)] lg:static lg:top-0 lg:h-auto
+        ${isExpanded || isMobileOpen ? "w-[290px]" : isHovered ? "w-[290px]" : "w-[90px]"}
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex  ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-          }`}
+        className={`flex ${
+          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+        }`}
       >
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            // <>
-            //   <Image
-            //     className="dark:hidden"
-            //     src="/images/logo/logo.svg"
-            //     alt="Logo"
-            //     width={150}
-            //     height={40}
-            //   />
-            //   <Image
-            //     className="hidden dark:block"
-            //     src="/images/logo/logo-dark.svg"
-            //     alt="Logo"
-            //     width={150}
-            //     height={40}
-            //   />
-            // </>
-            <>
-              {/* <Image
-    width={154}
-    height={32}
-    className="dark:hidden"
-    src="./images/logo/logo.svg"
-    alt="Logo"
-  />
-  <Image
-    width={154}
-    height={32}
-    className="hidden dark:block"
-    src="./images/logo/logo-dark.svg"
-    alt="Logo"
-  /> */}
-
-              <span className="text-xl text-black font-bold tracking-tight text-gray-900 dark:text-white">
-                SquadGoo Admin
-              </span>
-            </>
+            <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+              SquadGoo Admin
+            </span>
           ) : (
             <Image
               src="/images/logo/logo-icon.svg"
@@ -402,74 +371,14 @@ const AppSidebar: React.FC = () => {
           )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
-        <nav className="mb-6">
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-start"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(navItems, "main")}
-            </div>
-
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-start"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Recruiter"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div>
-
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-start"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Job Seekers"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(jobSekeersItems, "others")}
-            </div>
-
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-start"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Support & Settings"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(settingItems, "others")}
-            </div>
-
-          </div>
+      <div className="mt-6 flex flex-1 flex-col overflow-y-auto duration-300 ease-linear custom-scrollbar">
+        <nav className="flex flex-col gap-4">
+          <Section title="Menu">{renderMenuItems(navItems, "main")}</Section>
+          <Section title="Users">{renderMenuItems(othersItems, "others")}</Section>
+          <Section title="Operations">{renderMenuItems(jobSekeersItems, "others")}</Section>
+          <Section title="Super Admin Access">
+            {renderMenuItems(settingItems, "others")}
+          </Section>
         </nav>
         {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}
       </div>

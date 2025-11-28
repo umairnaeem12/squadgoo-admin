@@ -35,7 +35,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
       </div>
 
       {/* === Card Body === */}
-      <div className="border-t border-gray-100 dark:border-gray-800 p-0">
+      <div className="border-t border-gray-100 dark:border-gray-800 p-0 px-4 pb-2">
         {children}
       </div>
     </div>

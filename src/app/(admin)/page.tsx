@@ -32,10 +32,10 @@ export default function Ecommerce() {
         </div>
       </div>
 
-      {/* Super admin controls – matches Admin Panel Control / Platform Controls / ATO / CRM */}
+      {/* Super admin controls - matches Admin Panel Control / Platform Controls / ATO / CRM */}
       <ComponentCard
         title="Admin Panel Control"
-        desc="High-level switches and reports for platform behaviour, taxation exports and CRM overview (dummy data only)"
+        desc="High-level switches and reports for platform behaviour, taxation exports and CRM overview (dummy data only)."
         className="border-0 shadow-lg dark:shadow-xl dark:shadow-black/20"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
@@ -50,14 +50,15 @@ export default function Ecommerce() {
               </p>
             </div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Quick Search, Manual Search, marketplace access, in‑platform payments and Squad
+              Quick Search, Manual Search, marketplace access, in-platform payments and Squad
               Courier can all be controlled from here once wired to a backend.
             </p>
             <ul className="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
-              <li>• Quick Search: Enabled</li>
-              <li>• Manual Search: Enabled</li>
-              <li>• Marketplace: Pilot in AU states</li>
-              <li>• In‑platform payments: Enabled for Bronze+ badges</li>
+              <li>{"\u2022"} Quick Search: Enabled</li>
+              <li>{"\u2022"} Manual Search: Enabled</li>
+              <li>{"\u2022"} Marketplace: Pilot in 4 AU states</li>
+              <li>{"\u2022"} In-platform payments: Enabled for Bronze+ badges</li>
+              <li>{"\u2022"} Squad Courier: Beta rollout, metro only</li>
             </ul>
           </div>
 
@@ -72,13 +73,14 @@ export default function Ecommerce() {
               </p>
             </div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Summary of SG Coin flows and GST‑relevant activity. In a real system these buttons
+              Summary of SG Coin flows and GST-relevant activity. In a real system these buttons
               would generate CSV / JSON exports for accountants.
             </p>
             <ul className="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
-              <li>• Jobs & SG Coin summary (monthly)</li>
-              <li>• Wallet withdrawals & bank payouts</li>
-              <li>• Marketplace sales and fees</li>
+              <li>{"\u2022"} Jobs & SG Coin summary (monthly)</li>
+              <li>{"\u2022"} Wallet withdrawals & bank payouts</li>
+              <li>{"\u2022"} Marketplace sales and fees</li>
+              <li>{"\u2022"} GST export packs by quarter</li>
             </ul>
           </div>
 
@@ -93,7 +95,7 @@ export default function Ecommerce() {
               </p>
             </div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Read‑only CRM style snapshot of your user base – useful for super admins during
+              Read-only CRM style snapshot of your user base - useful for super admins during
               audits and risk reviews.
             </p>
             <div className="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
@@ -116,9 +118,15 @@ export default function Ecommerce() {
                 </span>
               </p>
               <p>
-                High‑risk watchlist:{" "}
+                High-risk watchlist:{" "}
                 <span className="font-semibold text-gray-900 dark:text-white">
                   42 accounts
+                </span>
+              </p>
+              <p>
+                Average ticket size (last 30 days):{" "}
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  $184.20
                 </span>
               </p>
             </div>

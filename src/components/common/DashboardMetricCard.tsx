@@ -59,5 +59,4 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
   );
 };
 
-export default DashboardMetricCard;
-
+export default React.memo(DashboardMetricCard);

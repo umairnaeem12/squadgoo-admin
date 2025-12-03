@@ -32,6 +32,40 @@ export default function Ecommerce() {
         </div>
       </div>
 
+      {/* Today activity snapshot */}
+      <ComponentCard
+        title="Today’s Activity Summary"
+        desc="High-level dummy snapshot for today’s SquadGoo platform activity."
+        className="border-0 shadow-md dark:shadow-xl dark:shadow-black/20"
+      >
+        <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-3">
+          <div className="space-y-1 text-sm text-gray-700 dark:text-gray-200">
+            <p className="text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">
+              Jobs
+            </p>
+            <p>Jobs posted today: <span className="font-semibold">248</span></p>
+            <p>Jobs filled today: <span className="font-semibold">193</span></p>
+            <p>Average time to fill: <span className="font-semibold">3.4 hours</span></p>
+          </div>
+          <div className="space-y-1 text-sm text-gray-700 dark:text-gray-200">
+            <p className="text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">
+              Users
+            </p>
+            <p>New job seekers: <span className="font-semibold">87</span></p>
+            <p>New recruiters: <span className="font-semibold">24</span></p>
+            <p>Users online now: <span className="font-semibold">612</span></p>
+          </div>
+          <div className="space-y-1 text-sm text-gray-700 dark:text-gray-200">
+            <p className="text-xs font-semibold uppercase text-gray-400 dark:text-gray-500">
+              Support & Risk
+            </p>
+            <p>New support tickets: <span className="font-semibold">37</span></p>
+            <p>Tickets resolved today: <span className="font-semibold">41</span></p>
+            <p>High-risk alerts triggered: <span className="font-semibold">3</span></p>
+          </div>
+        </div>
+      </ComponentCard>
+
       {/* Super admin controls - matches Admin Panel Control / Platform Controls / ATO / CRM */}
       <ComponentCard
         title="Admin Panel Control"

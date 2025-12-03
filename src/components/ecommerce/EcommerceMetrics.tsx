@@ -32,11 +32,25 @@ const metrics = [
     trendDirection: "up" as const,
     icon: <DollarLineIcon className="text-gray-800 dark:text-white/90" />,
   },
+  {
+    label: "Jobs Posted Today",
+    value: "248",
+    trend: "+6.4% vs yesterday",
+    trendDirection: "up" as const,
+    icon: <BoxCubeIcon className="text-gray-800 dark:text-white/90" />,
+  },
+  {
+    label: "New Support Tickets",
+    value: "37",
+    trend: "-12.3% vs last week",
+    trendDirection: "down" as const,
+    icon: <BoxIconLine className="text-gray-800 dark:text-white/90" />,
+  },
 ];
 
 export const EcommerceMetrics = () => {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:grid-cols-6">
       {metrics.map((metric) => (
         <DashboardMetricCard key={metric.label} {...metric} />
       ))}

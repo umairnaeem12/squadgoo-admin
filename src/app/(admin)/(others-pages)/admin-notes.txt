@@ -1,1 +1,6 @@
 Temporary admin notes file.
+
+[2025-12-03] Dashboard polish & dummy data pass
+- Wrapped DashboardMetricCard with React.memo for lightweight render optimisation.
+- Expanded EcommerceMetrics with additional dummy KPIs (jobs posted today, support tickets).
+- Added a Today’s Activity Summary section on the main admin dashboard.

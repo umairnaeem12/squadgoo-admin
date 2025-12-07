@@ -29,7 +29,7 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
   const TrendIcon = trendDirection === "up" ? ArrowUpIcon : ArrowDownIcon;
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/10 dark:shadow-black/30 md:p-6">
       <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
         {icon}
       </div>
@@ -45,12 +45,16 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({
         </div>
 
         {trend && (
-          <Badge color={resolvedBadgeColor}>
-            <TrendIcon
-              className={
-                trendDirection === "down" ? "text-error-500" : undefined
-              }
-            />
+          <Badge
+            color={resolvedBadgeColor}
+            startIcon={
+              <TrendIcon
+                className={
+                  trendDirection === "down" ? "text-error-500" : undefined
+                }
+              />
+            }
+          >
             {trend}
           </Badge>
         )}

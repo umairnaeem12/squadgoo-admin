@@ -89,6 +89,26 @@ export default function JobseekerDirectory() {
     },
   ];
 
+  const kycStats = [
+    { label: "Pending KYC", value: "34", helper: "Need Sumsub follow-up" },
+    { label: "Pending address proof", value: "12", helper: "Docs uploaded but awaiting review" },
+    { label: "Resume verification queue", value: "7", helper: "Paid PRO requests" },
+  ];
+
+  const onboardingChecklist = [
+    "Sumsub identity + address verification complete",
+    "Tax info (ABN/TFN) supplied",
+    "At least one job preference configured",
+    "Availability calendar synced for quick/manual offers",
+    "Squad pairing reviewed if applicable",
+  ];
+
+  const sumsubLinks = [
+    { title: "Start Sumsub session", detail: "Send magic link to jobseeker to resume KYC." },
+    { title: "Request additional docs", detail: "Ask for updated proof via Customer Service ticket." },
+    { title: "Download verification certificate", detail: "Export PDF for compliance audits." },
+  ];
+
   const filteredJobseekers = useMemo(() => {
     if (!searchQuery.trim()) return jobseekers;
     const query = searchQuery.toLowerCase();
@@ -242,6 +262,54 @@ export default function JobseekerDirectory() {
               </p>
             </div>
           )}
+        </div>
+      </ComponentCard>
+
+      <ComponentCard
+        title="Onboarding & KYC overview"
+        desc="Doc notes Sumsub verification, resume checks and squad approvals."
+      >
+        <div className="grid gap-4 md:grid-cols-3 text-sm text-gray-700 dark:text-gray-300">
+          {kycStats.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+            >
+              <p className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
+                {stat.label}
+              </p>
+              <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">
+                {stat.value}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{stat.helper}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Checklist</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
+              {onboardingChecklist.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              KYC actions
+            </p>
+            <ul className="mt-2 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              {sumsubLinks.map((link) => (
+                <li
+                  key={link.title}
+                  className="rounded-xl border border-gray-100 p-3 dark:border-gray-800"
+                >
+                  <p className="font-semibold text-gray-900 dark:text-white">{link.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{link.detail}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </ComponentCard>
 

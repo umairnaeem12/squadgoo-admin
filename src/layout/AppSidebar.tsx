@@ -60,6 +60,26 @@ const jobSekeersItems: NavItem[] = [
     icon: <TableIcon />,
     path: "/JobPostManagement",
   },
+  {
+    name: "Matching Engines",
+    icon: <TableIcon />,
+    path: "/MatchingEngines",
+  },
+  {
+    name: "Talent Pools",
+    icon: <TableIcon />,
+    path: "/TalentPools",
+  },
+  {
+    name: "Marketplace Control",
+    icon: <TableIcon />,
+    path: "/MarketplaceControl",
+  },
+  {
+    name: "Customer Service",
+    icon: <TableIcon />,
+    path: "/CustomerService",
+  },
 ];
 
 const settingItems: NavItem[] = [
@@ -82,6 +102,11 @@ const settingItems: NavItem[] = [
     name: "CRM",
     icon: <UserCircleIcon />,
     path: "/CRM",
+  },
+  {
+    name: "Security Settings",
+    icon: <TableIcon />,
+    path: "/SecuritySettings",
   },
 ];
 

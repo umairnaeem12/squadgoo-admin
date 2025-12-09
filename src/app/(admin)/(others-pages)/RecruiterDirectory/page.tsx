@@ -115,6 +115,43 @@ export default function RecruiterDirectory() {
         },
     ];
 
+    const kybStats = [
+        { label: "Pending KYB", value: "18", helper: "Awaiting document review" },
+        { label: "Representative approvals", value: "12", helper: "Owner confirmation required" },
+        { label: "Watchlist recruiters", value: "4", helper: "Recent disputes or chargebacks" },
+    ];
+
+    const accountStructure = [
+        "Each company has one owner (main) account that controls badges, wallet, squad hiring.",
+        "Representatives (sub accounts) require owner-issued reference code + approval in admin.",
+        "If representative signs up without owner reference, admin must verify KYC/KYB before linking.",
+    ];
+
+    const representativeQueue = [
+        {
+            id: "REP-2031",
+            company: "TalentMatch HR",
+            owner: "John Doe",
+            rep: "Samantha Lee",
+            status: "Waiting owner approval",
+            submitted: "11 Mar, 2025",
+        },
+        {
+            id: "REP-2032",
+            company: "Apex Logistics",
+            owner: "Priya Patel",
+            rep: "Marco Ruiz",
+            status: "Needs additional KYC",
+            submitted: "10 Mar, 2025",
+        },
+    ];
+
+    const ownerControls = [
+        "Send approval code to representative",
+        "Force password reset / deactivate representative profile",
+        "Switch into representative account for support (proxy login)",
+    ];
+
     const filteredRecruiters = recruiters.filter(recruiter =>
         recruiter.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         recruiter.owner.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -282,6 +319,76 @@ export default function RecruiterDirectory() {
                     )}
                 </div>
 
+            </ComponentCard>
+
+            <ComponentCard
+                title="KYB & representative controls"
+                desc="Owner vs representative accounts, as outlined in the document."
+            >
+                <div className="grid gap-4 md:grid-cols-3 text-sm text-gray-700 dark:text-gray-300">
+                    {kybStats.map((stat) => (
+                        <div
+                            key={stat.label}
+                            className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+                        >
+                            <p className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
+                                {stat.label}
+                            </p>
+                            <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">
+                                {stat.value}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{stat.helper}</p>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Account structure</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
+                            {accountStructure.map((item) => (
+                                <li key={item}>{item}</li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Owner controls</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
+                            {ownerControls.map((control) => (
+                                <li key={control}>{control}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+                <div className="mt-4 overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-800">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                            <tr>
+                                <th className="px-4 py-2 font-medium">Request ID</th>
+                                <th className="px-4 py-2 font-medium">Company</th>
+                                <th className="px-4 py-2 font-medium">Owner</th>
+                                <th className="px-4 py-2 font-medium">Representative</th>
+                                <th className="px-4 py-2 font-medium">Status</th>
+                                <th className="px-4 py-2 font-medium">Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            {representativeQueue.map((rep) => (
+                                <tr key={rep.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                                    <td className="px-4 py-2 font-semibold text-gray-900 dark:text-white">{rep.id}</td>
+                                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{rep.company}</td>
+                                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{rep.owner}</td>
+                                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{rep.rep}</td>
+                                    <td className="px-4 py-2">
+                                        <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                                            {rep.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-2 text-gray-600 dark:text-gray-400">{rep.submitted}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </ComponentCard>
 
             {/* Enhanced Recruiter Details Modal */}

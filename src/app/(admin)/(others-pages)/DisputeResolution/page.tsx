@@ -5,8 +5,11 @@ import {
   AlertTriangle,
   BadgeCheck,
   Clock,
+  FileText,
   Gavel,
   MessageCircle,
+  Paperclip,
+  RefreshCcw,
   Scale,
 } from "lucide-react";
 
@@ -53,6 +56,90 @@ const DISPUTES: Dispute[] = [
     status: "Resolved",
     amountHold: 90,
     createdAt: "02 Feb, 2025",
+  },
+];
+
+const HOLD_TIMELINE = [
+  {
+    stage: "Complaint submitted",
+    detail:
+      "Equivalent SG Coins placed on hold instantly. Neither party can withdraw or spend those coins.",
+    timer: "Immediate",
+  },
+  {
+    stage: "Mediator window",
+    detail:
+      "Mediator joins the thread, requests evidence, and sets deadlines. Hold persists while evidence is reviewed.",
+    timer: "Mediator sets 24-48h response timer",
+  },
+  {
+    stage: "Decision + appeal window",
+    detail:
+      "Once a verdict is issued, both sides have up to 7 days to appeal (max two appeals total). Hold remains in place.",
+    timer: "7 days per appeal",
+  },
+  {
+    stage: "Release / refund",
+    detail:
+      "SG Coins released to winning party or refunded to buyer. If decision favors the seller/recruiter, mediator may also levy fines.",
+    timer: "Immediate after final appeal window",
+  },
+];
+
+const MEDIATOR_CHATS = [
+  {
+    id: "DSP-9001",
+    participants: "Rakesh Sharma ↔ TalentMatch HR",
+    unread: 2,
+    lastMessage: "Mediator requested QR code proof for stage 6 payment request.",
+    holdNote: "Auto-release in 4 days unless appealed.",
+  },
+  {
+    id: "DSP-9002",
+    participants: "Mia Collins ↔ Shehroz Motors ↔ Squad Courier",
+    unread: 0,
+    lastMessage: "Seller uploaded inspection video and courier receipt.",
+    holdNote: "Waiting on buyer response; hold stays active.",
+  },
+];
+
+const EVIDENCE_QUEUE = [
+  {
+    id: "EV-501",
+    party: "Recruiter",
+    type: "Clock stop agreement (Quick job stage 7)",
+    due: "12 Mar, 2025",
+    status: "Pending upload",
+  },
+  {
+    id: "EV-502",
+    party: "Jobseeker",
+    type: "Location screenshots (stage 3-5)",
+    due: "11 Mar, 2025",
+    status: "Received",
+  },
+  {
+    id: "EV-503",
+    party: "Seller",
+    type: "Courier receipt / proof of delivery",
+    due: "10 Mar, 2025",
+    status: "Overdue",
+  },
+];
+
+const APPEAL_RULES = [
+  "Each side gets max two appeals, and every appeal must include new evidence.",
+  "Appeal must be lodged within 7 days of the latest decision, otherwise SG Coins settle.",
+  "Mediator can extend the timer if courier shipping exceeds 7 days (per doc).",
+];
+
+const APPEAL_QUEUE = [
+  {
+    id: "DSP-9003",
+    stage: "Appeal 1",
+    filedBy: "Buyer",
+    detail: "Buyer claims courier marked delivered too early; requesting new GPS logs.",
+    due: "11 Mar, 2025",
   },
 ];
 
@@ -166,6 +253,154 @@ export default function DisputeResolutionPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </ComponentCard>
+
+      <ComponentCard
+        title="Hold & release timeline"
+        desc="Matches the document's stage 6/7 flow where SG Coins remain frozen until both parties or mediator finalize the job."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          {HOLD_TIMELINE.map((stage) => (
+            <div
+              key={stage.stage}
+              className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {stage.stage}
+                </p>
+                <span className="text-xs font-medium text-brand-600 dark:text-brand-300">
+                  {stage.timer}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{stage.detail}</p>
+            </div>
+          ))}
+        </div>
+      </ComponentCard>
+
+      <ComponentCard
+        title="Mediator chat threads"
+        desc="Internal view of live mediator conversations, unread counts and hold timers."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          {MEDIATOR_CHATS.map((chat) => (
+            <div
+              key={chat.id}
+              className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{chat.id}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{chat.participants}</p>
+                </div>
+                {chat.unread > 0 && (
+                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-500/15 dark:text-red-300">
+                    {chat.unread} unread
+                  </span>
+                )}
+              </div>
+              <p className="mt-3 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <MessageCircle className="w-4 h-4 text-brand-500" />
+                {chat.lastMessage}
+              </p>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{chat.holdNote}</p>
+            </div>
+          ))}
+        </div>
+      </ComponentCard>
+
+      <ComponentCard
+        title="Evidence requests & uploads"
+        desc="Track outstanding attachments per the doc (screenshots, invoices, courier receipts)."
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              <tr>
+                <th className="px-4 py-3 font-medium">Request ID</th>
+                <th className="px-4 py-3 font-medium">Party</th>
+                <th className="px-4 py-3 font-medium">Evidence type</th>
+                <th className="px-4 py-3 font-medium">Due</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {EVIDENCE_QUEUE.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{item.id}</td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.party}</td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.type}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{item.due}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
+                        item.status === "Received"
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                          : item.status === "Overdue"
+                          ? "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300"
+                          : "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                      }`}
+                    >
+                      {item.status === "Received" ? (
+                        <FileText className="w-3 h-3" />
+                      ) : item.status === "Overdue" ? (
+                        <AlertTriangle className="w-3 h-3" />
+                      ) : (
+                        <Paperclip className="w-3 h-3" />
+                      )}
+                      {item.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ComponentCard>
+
+      <ComponentCard
+        title="Appeals & re-open workflow"
+        desc="Doc allows up to two appeals per party with mandatory new evidence."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Policy reminders</p>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-700 dark:text-gray-300">
+              {APPEAL_RULES.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center gap-2">
+              <Gavel className="w-5 h-5 text-brand-500" />
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Active appeals</p>
+            </div>
+            <ul className="mt-3 space-y-3">
+              {APPEAL_QUEUE.map((appeal) => (
+                <li key={appeal.id} className="rounded-xl border border-gray-100 p-3 dark:border-gray-800">
+                  <div className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-300">
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {appeal.id} · {appeal.stage}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Filed by {appeal.filedBy}</p>
+                    </div>
+                    <span className="text-xs font-medium text-amber-600 dark:text-amber-300">
+                      Due {appeal.due}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{appeal.detail}</p>
+                  <button className="mt-2 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+                    <RefreshCcw className="w-3 h-3" />
+                    Review appeal
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </ComponentCard>
     </div>

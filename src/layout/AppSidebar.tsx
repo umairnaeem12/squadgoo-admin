@@ -172,7 +172,7 @@ const AppSidebar: React.FC = () => {
   ) => (
     <ul className="flex flex-col gap-0">
       {navItems.map((nav, index) => (
-        <li key={nav.name}>
+        <li key={`${nav.name}-${nav.path ?? index}`}>
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
@@ -241,7 +241,7 @@ const AppSidebar: React.FC = () => {
             >
               <ul className="mt-2 space-y-1 ml-9">
                 {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
+                  <li key={`${subItem.name}-${subItem.path}`}>
                     <Link
                       href={subItem.path}
                       className={`menu-dropdown-item ${isActive(subItem.path)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import ComponentCard from "@/components/common/ComponentCard";
@@ -86,7 +86,7 @@ const customerReplies = [
   "Yes, that is the exact error I see.",
 ];
 
-export default function AdminChatPage() {
+function AdminChatContent() {
   const searchParams = useSearchParams();
   const fallbackTicket = useMemo(() => {
     const latest = [...ticketMeta].sort(
@@ -252,5 +252,13 @@ export default function AdminChatPage() {
         </div>
       </ComponentCard>
     </div>
+  );
+}
+
+export default function AdminChatPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-sm text-gray-500">Loading chat…</div>}>
+      <AdminChatContent />
+    </Suspense>
   );
 }

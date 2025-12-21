@@ -1031,14 +1031,14 @@ export default function AdminWalletPage() {
                       <td className="">
                         <div className="flex items-center gap-2">
                           <Button
-                            size="xs"
+                            size="sm"
                             variant="outline"
                             onClick={() => handleWork(txn.id)}
                           >
                             Work
                           </Button>
                           <Button
-                            size="xs"
+                            size="sm"
                             variant="outline"
                             onClick={() => {
                               setAssignModalOpen(true);

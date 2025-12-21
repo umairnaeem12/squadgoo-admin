@@ -766,7 +766,7 @@ const ProfileFeedback: React.FC<{ feedback: ProfilePayload["feedback"] }> = ({
                 wrapperClassName="absolute inset-0"
                 inputClassName="h-8 w-9 rounded-lg border border-gray-200 bg-white text-transparent caret-transparent placeholder:text-transparent focus:outline-none dark:border-gray-700 dark:bg-gray-900/60"
                 defaultDate={
-                  rangeStart && rangeEnd ? [rangeStart, rangeEnd] : undefined
+                  rangeStart && rangeEnd ? `${rangeStart} to ${rangeEnd}` : undefined
                 }
                 onChange={handleRangeChange}
               />

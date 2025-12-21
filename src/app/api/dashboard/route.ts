@@ -117,7 +117,14 @@ const metricDefinitions = [
     href: "/support-tickets",
     format: "number",
   },
-];
+] satisfies Array<{
+  label: string;
+  type: string;
+  min: number;
+  max: number;
+  href: string;
+  format: MetricFormat;
+}>;
 
 const buildMetrics = () =>
   metricDefinitions.map((metric) => {

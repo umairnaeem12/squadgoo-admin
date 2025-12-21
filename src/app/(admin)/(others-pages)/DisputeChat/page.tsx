@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
@@ -134,7 +134,7 @@ const departments = [
 const makeSeed = (value: string) =>
   value.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
 
-export default function DisputeChatPage() {
+function DisputeChatContent() {
   const searchParams = useSearchParams();
   const caseId = useMemo(
     () => (searchParams.get("case") ?? "DSP-UNKNOWN").toUpperCase(),
@@ -570,5 +570,15 @@ export default function DisputeChatPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DisputeChatPage() {
+  return (
+    <Suspense
+      fallback={<div className="p-4 text-sm text-gray-500">Loading chat…</div>}
+    >
+      <DisputeChatContent />
+    </Suspense>
   );
 }

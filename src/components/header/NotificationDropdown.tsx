@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import {
@@ -9,11 +10,17 @@ import {
   Clock,
   Coins,
   MessageCircle,
+  Trash2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
+import { useNotifications } from "@/context/NotificationContext";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifying, setNotifying] = useState(true);
+  const router = useRouter();
+  const { notifications, unreadCount, markRead, toggleRead, remove, setAllRead } =
+    useNotifications();
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -23,62 +30,23 @@ export default function NotificationDropdown() {
     setIsOpen(false);
   }
 
-  const handleClick = () => {
-    toggleDropdown();
-    setNotifying(false);
+  const iconMap = {
+    clock: <Clock className="w-4 h-4 text-brand-500" />,
+    alert: <AlertTriangle className="w-4 h-4 text-amber-500" />,
+    coins: <Coins className="w-4 h-4 text-emerald-500" />,
+    chat: <MessageCircle className="w-4 h-4 text-purple-500" />,
+    bell: <BellRing className="w-4 h-4 text-slate-500" />,
   };
-  const notifications = [
-    {
-      id: "notif-1",
-      title: "Quick job timer low",
-      desc: "Job #QJ-938 will exhaust recruiter wallet in < 1h.",
-      time: "Just now",
-      icon: <Clock className="w-4 h-4 text-brand-500" />,
-      type: "Quick job",
-    },
-    {
-      id: "notif-2",
-      title: "Marketplace hold > 7 days",
-      desc: "LIST-5001 still on hold; mediator reminder issued.",
-      time: "5 min ago",
-      icon: <AlertTriangle className="w-4 h-4 text-amber-500" />,
-      type: "Marketplace",
-    },
-    {
-      id: "notif-3",
-      title: "Referral payout ready",
-      desc: "Jobseeker badge referral payout 20 SG coins.",
-      time: "20 min ago",
-      icon: <Coins className="w-4 h-4 text-emerald-500" />,
-      type: "Referral",
-    },
-    {
-      id: "notif-4",
-      title: "Expiring chat",
-      desc: "Recruiter ↔ Rakesh chat hits 30-day limit tomorrow.",
-      time: "45 min ago",
-      icon: <MessageCircle className="w-4 h-4 text-purple-500" />,
-      type: "Chat",
-    },
-    {
-      id: "notif-5",
-      title: "Support ticket auto-close",
-      desc: "Ticket #SUP-771 inactive 6 days—auto-close soon.",
-      time: "1 hr ago",
-      icon: <BellRing className="w-4 h-4 text-slate-500" />,
-      type: "Support",
-    },
-  ];
 
   return (
     <div className="relative">
       <button
         className="relative dropdown-toggle flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-        onClick={handleClick}
+        onClick={toggleDropdown}
       >
         <span
           className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 ${
-            !notifying ? "hidden" : "flex"
+            unreadCount === 0 ? "hidden" : "flex"
           }`}
         >
           <span className="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping"></span>
@@ -107,40 +75,59 @@ export default function NotificationDropdown() {
           <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
             Notification
           </h5>
-          <button
-            onClick={toggleDropdown}
-            className="text-gray-500 transition dropdown-toggle dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-          >
-            <svg
-              className="fill-current"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={setAllRead}
+              className="text-xs font-medium text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M6.21967 7.28131C5.92678 6.98841 5.92678 6.51354 6.21967 6.22065C6.51256 5.92775 6.98744 5.92775 7.28033 6.22065L11.999 10.9393L16.7176 6.22078C17.0105 5.92789 17.4854 5.92788 17.7782 6.22078C18.0711 6.51367 18.0711 6.98855 17.7782 7.28144L13.0597 12L17.7782 16.7186C18.0711 17.0115 18.0711 17.4863 17.7782 17.7792C17.4854 18.0721 17.0105 18.0721 16.7176 17.7792L11.999 13.0607L7.28033 17.7794C6.98744 18.0722 6.51256 18.0722 6.21967 17.7794C5.92678 17.4865 5.92678 17.0116 6.21967 16.7187L10.9384 12L6.21967 7.28131Z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
+              Mark all read
+            </button>
+            <button
+              onClick={toggleDropdown}
+              className="text-gray-500 transition dropdown-toggle dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            >
+              <svg
+                className="fill-current"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M6.21967 7.28131C5.92678 6.98841 5.92678 6.51354 6.21967 6.22065C6.51256 5.92775 6.98744 5.92775 7.28033 6.22065L11.999 10.9393L16.7176 6.22078C17.0105 5.92789 17.4854 5.92788 17.7782 6.22078C18.0711 6.51367 18.0711 6.98855 17.7782 7.28144L13.0597 12L17.7782 16.7186C18.0711 17.0115 18.0711 17.4863 17.7782 17.7792C17.4854 18.0721 17.0105 18.0721 16.7176 17.7792L11.999 13.0607L7.28033 17.7794C6.98744 18.0722 6.51256 18.0722 6.21967 17.7794C5.92678 17.4865 5.92678 17.0116 6.21967 16.7187L10.9384 12L6.21967 7.28131Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
         <ul className="flex flex-col h-auto overflow-y-auto custom-scrollbar">
-          {notifications.map((notification) => (
-            <li key={notification.id}>
-              <DropdownItem
-                onItemClick={closeDropdown}
-                className="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                  {notification.icon}
-                </span>
-                <span className="flex-1">
-                  <span className="flex items-center justify-between text-sm font-semibold text-gray-900 dark:text-white">
-                    {notification.title}
-                    <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+          {notifications.length === 0 ? (
+            <li className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
+              No notifications yet.
+            </li>
+          ) : (
+            notifications.map((notification) => (
+              <li key={notification.id}>
+                <DropdownItem
+                  onItemClick={() => {
+                    markRead(notification.id);
+                    closeDropdown();
+                    router.push(notification.href);
+                  }}
+                  className={`flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
+                    notification.read ? "" : "bg-brand-100/60 dark:bg-brand-500/20"
+                  }`}
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                    {iconMap[notification.icon]}
+                  </span>
+                <span className="flex-1 min-w-0">
+                  <span className="flex items-center justify-between gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+                    <span className="truncate">{notification.title}</span>
+                    <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
                       {notification.type}
                     </span>
                   </span>
@@ -151,12 +138,41 @@ export default function NotificationDropdown() {
                     {notification.time}
                   </p>
                 </span>
+                <span className="flex flex-col items-end gap-2">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleRead(notification.id);
+                    }}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-brand-300 hover:text-brand-600 dark:border-gray-700 dark:text-gray-400 dark:hover:text-brand-300"
+                    aria-label={notification.read ? "Mark unread" : "Mark read"}
+                  >
+                    {notification.read ? (
+                      <EyeOff className="h-3.5 w-3.5" />
+                    ) : (
+                      <Eye className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      remove(notification.id);
+                    }}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-red-300 hover:text-red-500 dark:border-gray-700 dark:text-gray-400 dark:hover:text-red-300"
+                    aria-label="Delete notification"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </span>
               </DropdownItem>
-            </li>
-          ))}
+              </li>
+            ))
+          )}
         </ul>
         <Link
-          href="/"
+          href="/Notifications"
           className="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
         >
           View All Notifications

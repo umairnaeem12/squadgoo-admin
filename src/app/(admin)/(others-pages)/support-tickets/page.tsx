@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
     AlertTriangle,
     BadgeCheck,
@@ -60,6 +61,7 @@ const DISPUTES: Dispute[] = [
 ];
 
 export default function SupportTicketsPage() {
+    const router = useRouter();
     const [filter, setFilter] = useState<TicketStatus>("all");
     const [showFilterBox, setShowFilterBox] = useState(false);
     const filterRef = useRef<HTMLDivElement | null>(null);
@@ -253,7 +255,13 @@ export default function SupportTicketsPage() {
                             {filteredTickets.map((t, i) => (
                                 <tr
                                     key={i}
-                                    className="hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                                    onClick={() =>
+                                        router.push(
+                                            `/AdminChat?ticket=${encodeURIComponent(t.id)}&mode=${t.status === "pending" ? "live" : "history"
+                                            }`
+                                        )
+                                    }
+                                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition"
                                 >
                                     <td className="px-6 py-3 text-gray-800 dark:text-gray-200">
                                         {t.id}

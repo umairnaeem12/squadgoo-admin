@@ -3,15 +3,28 @@ import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
-import Image from "next/image";
 import Link from "next/link";
-import React, { useState, useEffect, useRef } from "react";
-import { MessageCircle, WalletCards } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, DollarSign, MessageCircle, XCircle } from "lucide-react";
+
+type SearchEntry = {
+  id: string;
+  label: string;
+  subtitle: string;
+  href: string;
+  keywords: string[];
+  access: boolean;
+};
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchToast, setSearchToast] = useState<string | null>(null);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const router = useRouter();
 
   const handleToggle = () => {
     if (window.innerWidth >= 1024) {
@@ -25,6 +38,7 @@ const AppHeader: React.FC = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
   };
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchWrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -40,6 +54,209 @@ const AppHeader: React.FC = () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    if (!searchToast) {
+      return;
+    }
+    const timer = setTimeout(() => setSearchToast(null), 2800);
+    return () => clearTimeout(timer);
+  }, [searchToast]);
+
+  useEffect(() => {
+    const handleOutside = (event: MouseEvent) => {
+      if (
+        searchWrapRef.current &&
+        !searchWrapRef.current.contains(event.target as Node)
+      ) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
+  const searchIndex: SearchEntry[] = useMemo(
+    () => [
+      {
+        id: "search-chat-umair",
+        label: "Umair Khan",
+        subtitle: "Live support chat assigned",
+        href: "/AdminChat?ticket=323538&mode=live",
+        keywords: ["umair", "chat", "support", "ticket", "323538"],
+        access: true,
+      },
+      {
+        id: "search-dispute-umair",
+        label: "Umair - Dispute case LIST-5001",
+        subtitle: "Marketplace dispute chat",
+        href: "/DisputeChat?case=LIST-5001",
+        keywords: ["umair", "dispute", "marketplace", "list-5001"],
+        access: true,
+      },
+      {
+        id: "search-wallet-umair",
+        label: "Umair purchase - TX-9051",
+        subtitle: "Wallet transaction details",
+        href: "/AdminWallet",
+        keywords: ["umair", "transaction", "wallet", "tx-9051"],
+        access: false,
+      },
+      {
+        id: "search-task-umair",
+        label: "Umair onboarding follow-up",
+        subtitle: "Assigned task",
+        href: "/MyTask",
+        keywords: ["umair", "task", "onboarding"],
+        access: true,
+      },
+      {
+        id: "search-notification-umair",
+        label: "Notification - Umair reply",
+        subtitle: "Unread notification entry",
+        href: "/Notifications",
+        keywords: ["umair", "notification"],
+        access: true,
+      },
+      {
+        id: "search-chat-jasmine",
+        label: "Jasmine Patel",
+        subtitle: "Live support chat assigned",
+        href: "/AdminChat?ticket=323537&mode=live",
+        keywords: ["jasmine", "patel", "chat", "support", "323537"],
+        access: true,
+      },
+      {
+        id: "search-chat-ravi",
+        label: "Ravi Kumar",
+        subtitle: "Resolved chat transcript",
+        href: "/AdminChat?ticket=323534&mode=history",
+        keywords: ["ravi", "kumar", "chat", "history", "323534"],
+        access: true,
+      },
+      {
+        id: "search-dispute-mia",
+        label: "Mia Collins dispute - LIST-7002",
+        subtitle: "Marketplace dispute chat",
+        href: "/DisputeChat?case=LIST-7002",
+        keywords: ["mia", "collins", "dispute", "marketplace", "list-7002"],
+        access: true,
+      },
+      {
+        id: "search-dispute-omar",
+        label: "Omar Daniels dispute - LIST-7014",
+        subtitle: "Open mediation thread",
+        href: "/DisputeChat?case=LIST-7014",
+        keywords: ["omar", "daniels", "dispute", "mediation", "list-7014"],
+        access: true,
+      },
+      {
+        id: "search-wallet-isha",
+        label: "Isha Tariq purchase - TX-9078",
+        subtitle: "Wallet transaction details",
+        href: "/AdminWallet",
+        keywords: ["isha", "tariq", "transaction", "wallet", "tx-9078"],
+        access: false,
+      },
+      {
+        id: "search-wallet-priya",
+        label: "Priya Singh refund - RF-132",
+        subtitle: "Refund status review",
+        href: "/AdminWallet",
+        keywords: ["priya", "singh", "refund", "wallet", "rf-132"],
+        access: true,
+      },
+      {
+        id: "search-task-sarah",
+        label: "Sarah Ellis SLA review",
+        subtitle: "Assigned task",
+        href: "/MyTask",
+        keywords: ["sarah", "ellis", "task", "sla"],
+        access: true,
+      },
+      {
+        id: "search-task-hina",
+        label: "Hina Noor escalation follow-up",
+        subtitle: "Assigned task",
+        href: "/MyTask",
+        keywords: ["hina", "noor", "task", "escalation"],
+        access: true,
+      },
+      {
+        id: "search-notification-omar",
+        label: "Notification - Omar reply",
+        subtitle: "Unread notification entry",
+        href: "/Notifications",
+        keywords: ["omar", "notification", "reply"],
+        access: true,
+      },
+      {
+        id: "search-notification-sana",
+        label: "Notification - Sana withdrawal update",
+        subtitle: "Finance update",
+        href: "/Notifications",
+        keywords: ["sana", "withdrawal", "notification"],
+        access: true,
+      },
+      {
+        id: "search-wallet",
+        label: "Platform Wallet",
+        subtitle: "Finance operations",
+        href: "/AdminWallet",
+        keywords: ["wallet", "finance", "transactions", "refunds"],
+        access: true,
+      },
+      {
+        id: "search-dispute-center",
+        label: "Dispute Resolution Centre",
+        subtitle: "Evidence and mediation",
+        href: "/DisputeResolution",
+        keywords: ["dispute", "resolution", "mediation"],
+        access: true,
+      },
+      {
+        id: "search-my-task",
+        label: "My Task",
+        subtitle: "Assigned tasks",
+        href: "/MyTask",
+        keywords: ["task", "assigned", "today"],
+        access: true,
+      },
+      {
+        id: "search-notifications",
+        label: "Notifications",
+        subtitle: "All alerts and updates",
+        href: "/Notifications",
+        keywords: ["notification", "alerts", "updates"],
+        access: true,
+      },
+      {
+        id: "search-internal-chat",
+        label: "Internal chat",
+        subtitle: "Staff collaboration",
+        href: "/InternalChat",
+        keywords: ["internal", "chat", "staff"],
+        access: true,
+      },
+    ],
+    []
+  );
+
+  const filteredResults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return [];
+    }
+    return searchIndex.filter((entry) => {
+      if (entry.label.toLowerCase().includes(query)) {
+        return true;
+      }
+      if (entry.subtitle.toLowerCase().includes(query)) {
+        return true;
+      }
+      return entry.keywords.some((keyword) => keyword.includes(query));
+    });
+  }, [searchQuery, searchIndex]);
 
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
@@ -81,47 +298,13 @@ const AppHeader: React.FC = () => {
                 />
               </svg>
             )}
-            {/* Cross Icon */}
           </button>
 
-          {/* <Link href="/" className="lg:hidden">
-            <Image
-              width={154}
-              height={32}
-              className="dark:hidden"
-              src="./images/logo/logo.svg"
-              alt="Logo"
-            />
-            <Image
-              width={154}
-              height={32}
-              className="hidden dark:block"
-              src="./images/logo/logo-dark.svg"
-              alt="Logo"
-            />
-          </Link> */}
-
           <Link href="/" className="lg:hidden">
-            {/* <Image
-    width={154}
-    height={32}
-    className="dark:hidden"
-    src="./images/logo/logo.svg"
-    alt="Logo"
-  />
-  <Image
-    width={154}
-    height={32}
-    className="hidden dark:block"
-    src="./images/logo/logo-dark.svg"
-    alt="Logo"
-  /> */}
-
             <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
               SquadGoo
             </span>
           </Link>
-
 
           <button
             onClick={toggleApplicationMenu}
@@ -143,7 +326,7 @@ const AppHeader: React.FC = () => {
             </svg>
           </button>
 
-          <div className="hidden lg:block">
+          <div className="hidden lg:block" ref={searchWrapRef}>
             <form>
               <div className="relative">
                 <span className="absolute -translate-y-1/2 left-4 top-1/2 pointer-events-none">
@@ -167,52 +350,129 @@ const AppHeader: React.FC = () => {
                   ref={inputRef}
                   type="text"
                   placeholder="Search or type command..."
+                  value={searchQuery}
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                    setSearchOpen(true);
+                  }}
+                  onFocus={() => setSearchOpen(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      const first = filteredResults[0];
+                      if (!first) {
+                        return;
+                      }
+                      if (!first.access) {
+                        setSearchToast("You do not have access to this section.");
+                        return;
+                      }
+                      router.push(first.href);
+                      setSearchOpen(false);
+                    }
+                  }}
                   className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:bg-white/[0.03] dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
                 />
 
                 <button className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400">
-                  <span> ⌘ </span>
-                  <span> K </span>
+                  <span>Ctrl</span>
+                  <span>K</span>
                 </button>
               </div>
+              {searchOpen && searchQuery.trim() !== "" && (
+                <div className="absolute z-50 mt-2 w-full rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-900">
+                  <div className="max-h-[320px] overflow-y-auto">
+                    {filteredResults.length === 0 ? (
+                      <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        No results found.
+                      </div>
+                    ) : (
+                      filteredResults.map((result) => (
+                        <button
+                          key={result.id}
+                          type="button"
+                          onClick={() => {
+                            if (!result.access) {
+                              setSearchToast(
+                                "You do not have access to this section."
+                              );
+                              return;
+                            }
+                            router.push(result.href);
+                            setSearchOpen(false);
+                          }}
+                          className="flex w-full items-start justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {result.label}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {result.subtitle}
+                            </p>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-400 dark:text-gray-500">
+                              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                {result.href}
+                              </span>
+                              <span className="uppercase tracking-[0.2em]">
+                                {result.access ? "Accessible" : "Restricted"}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {result.access ? (
+                              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                            ) : (
+                              <XCircle className="h-5 w-5 text-red-400" />
+                            )}
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </form>
           </div>
         </div>
         <div
-          className={`${isApplicationMenuOpen ? "flex" : "hidden"
-            } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
+          className={`${isApplicationMenuOpen ? "flex" : "hidden"}
+            items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
-            {/* Internal chat shortcut */}
             <Link
-              href="/AdminChat"
+              href="/InternalChat"
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               aria-label="Internal Chat"
             >
               <MessageCircle className="w-5 h-5" />
             </Link>
 
-            {/* Wallet shortcut */}
             <Link
               href="/AdminWallet"
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               aria-label="Platform Wallet"
             >
-              <WalletCards className="w-5 h-5" />
+              <DollarSign className="h-5 w-5" />
             </Link>
 
-            {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />
-            {/* <!-- Dark Mode Toggler --> */}
-
             <NotificationDropdown />
-            {/* <!-- Notification Menu Area --> */}
           </div>
-          {/* <!-- User Area --> */}
           <UserDropdown />
-
         </div>
       </div>
+      {searchToast && (
+        <div className="pointer-events-none fixed inset-0 z-[100000] flex justify-end items-start px-4 pt-6">
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded-2xl border border-red-200 bg-white/95 px-4 py-3 text-sm font-medium text-red-600 shadow-lg shadow-red-400/30 backdrop-blur dark:border-red-800 dark:bg-gray-900/90 dark:text-red-400"
+          >
+            {searchToast}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

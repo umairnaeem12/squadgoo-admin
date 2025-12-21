@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useProfileData } from "@/hooks/useProfileData";
 import { useModal } from "@/hooks/useModal";
 import Image from "next/image";
@@ -553,6 +554,7 @@ const ProfileReviews: React.FC<{ reviews: ProfilePayload["reviews"] }> = ({
 const ProfileFeedback: React.FC<{ feedback: ProfilePayload["feedback"] }> = ({
   feedback,
 }) => {
+  const router = useRouter();
   const [typeFilter, setTypeFilter] = useState<"all" | FeedbackType>("all");
   const [directionFilter, setDirectionFilter] = useState<
     "all" | FeedbackDirection
@@ -663,7 +665,13 @@ const ProfileFeedback: React.FC<{ feedback: ProfilePayload["feedback"] }> = ({
         <p className="text-sm text-gray-500 dark:text-gray-400">{emptyText}</p>
       ) : (
         items.map((item) => (
-          <div key={item.id} className="rounded-2xl border border-gray-100 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+          <div
+            key={item.id}
+            onClick={() =>
+              router.push(`/AdminChat?ticket=${encodeURIComponent(item.id)}&mode=history`)
+            }
+            className="cursor-pointer rounded-2xl border border-gray-100 p-4 transition hover:border-brand-200 dark:border-gray-700 dark:bg-gray-900/40 dark:hover:border-brand-500/40"
+          >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-white/90">
@@ -795,6 +803,7 @@ const ProfileFeedback: React.FC<{ feedback: ProfilePayload["feedback"] }> = ({
 };
 
 const ProfileTasks: React.FC<{ tasks: ProfilePayload["tasks"] }> = ({ tasks }) => {
+  const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<
     "all" | ProfilePayload["tasks"][number]["status"]
   >("all");
@@ -837,6 +846,7 @@ const ProfileTasks: React.FC<{ tasks: ProfilePayload["tasks"] }> = ({ tasks }) =
         priorityFilter === "all" ? true : task.priority === priorityFilter
       );
   }, [todayTasks, statusFilter, priorityFilter]);
+  const displayTasks = filteredTasks.slice(0, 10);
 
   const todayCount = todayTasks.length;
   const getPriorityClass = (priority: ProfilePayload["tasks"][number]["priority"]) => {
@@ -904,14 +914,15 @@ const ProfileTasks: React.FC<{ tasks: ProfilePayload["tasks"] }> = ({ tasks }) =
         </div>
       </div>
       <div className="mt-5 space-y-4">
-        {filteredTasks.length === 0 ? (
+        {displayTasks.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">No tasks match the selected filters.</p>
         ) : (
-          filteredTasks.map((task) => (
+          displayTasks.map((task) => (
             <div
               key={task.id}
+              onClick={() => router.push(`/MyTask/${task.id}`)}
               className={`rounded-2xl border p-4 ${task.isToday ? "border-brand-200 bg-brand-50/40 dark:border-brand-500/40 dark:bg-brand-500/10" : "border-gray-100 dark:border-gray-800 dark:bg-gray-900/40"
-                }`}
+                } cursor-pointer transition hover:border-brand-300 dark:hover:border-brand-500/60`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>

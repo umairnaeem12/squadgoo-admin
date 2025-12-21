@@ -1,155 +1,253 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import ComponentCard from "@/components/common/ComponentCard";
-import {
-  AlertTriangle,
-  Calendar,
-  MessageCircle,
-  Shield,
-  Timer,
-} from "lucide-react";
+import Button from "@/components/ui/button/Button";
+import TextArea from "@/components/form/input/TextArea";
 
-const internalChannels = [
-  {
-    name: "Support & disputes",
-    description: "Live coordination between support agents, mediators and compliance.",
-    retention: "30-day chat window per match; transcripts stored 12 months.",
-    unread: 3,
-  },
-  {
-    name: "Engineering handoff",
-    description: "Escalate bugs discovered in user chats or notifications.",
-    retention: "Permanent internal channel (not tied to user chats).",
-    unread: 0,
-  },
+type ChatMode = "live" | "history";
+
+type ChatMessage = {
+  id: string;
+  sender: "agent" | "customer" | "system";
+  text: string;
+  timestamp: string;
+};
+
+type TicketMeta = {
+  id: string;
+  status: "pending" | "solved";
+  date: string;
+};
+
+const ticketMeta: TicketMeta[] = [
+  { id: "#323538", status: "pending", date: "2027-04-28" },
+  { id: "#323537", status: "solved", date: "2027-04-25" },
+  { id: "#323536", status: "pending", date: "2027-03-19" },
+  { id: "#323535", status: "pending", date: "2027-03-13" },
+  { id: "#323534", status: "solved", date: "2027-02-12" },
 ];
 
-const transcriptPolicies = [
-  "User chats expire 30 days after a match. Transcripts remain for 12 months for compliance reviews.",
-  "Internal staff channels (support, disputes, engineering) never expire but exports must be tagged with case IDs.",
-  "Any transcript shared with disputes must respect privacy rules and be deleted after 12 months.",
-];
+const formatTime = (value: string) =>
+  new Date(value).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
-const chatReminders = [
-  "Send reminders 3 days before chat expiry so both parties can re-offer if needed.",
-  "Disable the send box automatically when the 30-day window closes.",
-  "Allow staff to re-open chat by issuing a fresh offer, per the document.",
-];
+const getSeedMessages = (ticketId: string, mode: ChatMode): ChatMessage[] => {
+  const base = [
+    {
+      id: `${ticketId}-m1`,
+      sender: "customer" as const,
+      text: "Hi, I am still unable to log in after resetting my password.",
+      timestamp: "2025-12-20T10:05:00Z",
+    },
+    {
+      id: `${ticketId}-m2`,
+      sender: "agent" as const,
+      text: "Thanks for reporting this. I am checking your account now.",
+      timestamp: "2025-12-20T10:06:30Z",
+    },
+  ];
 
-const notificationRules = [
-  "Notify disputes when a wallet hold exceeds 7 days.",
-  "Alert jobseekers when quick job timers reach 1 hour remaining.",
-  "Ping compliance when watchlist users create new offers.",
+  if (mode === "history") {
+    return [
+      ...base,
+      {
+        id: `${ticketId}-m3`,
+        sender: "customer",
+        text: "That fixed it. I can log in again.",
+        timestamp: "2025-12-20T10:09:00Z",
+      },
+      {
+        id: `${ticketId}-m4`,
+        sender: "agent",
+        text: "Great. I will close the ticket as resolved. Reach out if you need anything else.",
+        timestamp: "2025-12-20T10:10:00Z",
+      },
+      {
+        id: `${ticketId}-m5`,
+        sender: "system",
+        text: "Ticket marked as resolved.",
+        timestamp: "2025-12-20T10:10:30Z",
+      },
+    ];
+  }
+
+  return base;
+};
+
+const customerReplies = [
+  "Got it, thank you.",
+  "I can confirm the issue now.",
+  "That makes sense. Please continue.",
+  "Yes, that is the exact error I see.",
 ];
 
 export default function AdminChatPage() {
+  const searchParams = useSearchParams();
+  const fallbackTicket = useMemo(() => {
+    const latest = [...ticketMeta].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    )[0];
+    return latest ?? { id: "unknown", status: "pending", date: "" };
+  }, []);
+  const ticketId = searchParams.get("ticket") ?? fallbackTicket.id;
+  const modeParam = searchParams.get("mode");
+  const mode = (modeParam ??
+    (fallbackTicket.status === "solved" ? "history" : "live")) as ChatMode;
+  const isHistory = mode === "history";
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    getSeedMessages(ticketId, mode)
+  );
+  const [draft, setDraft] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    setMessages(getSeedMessages(ticketId, mode));
+    setDraft("");
+  }, [ticketId, mode]);
+
+  const handleSend = useCallback(() => {
+    const text = draft.trim();
+    if (!text || isHistory) {
+      return;
+    }
+    const now = new Date().toISOString();
+    const newMessage: ChatMessage = {
+      id: `${ticketId}-agent-${now}`,
+      sender: "agent",
+      text,
+      timestamp: now,
+    };
+    setMessages((prev) => [...prev, newMessage]);
+    setDraft("");
+    setIsSending(true);
+
+    const replyDelay = 2000;
+    const replyText = customerReplies[Math.floor(Math.random() * customerReplies.length)];
+    const timeoutId = setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${ticketId}-customer-${Date.now()}`,
+          sender: "customer",
+          text: replyText,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      setIsSending(false);
+    }, replyDelay);
+
+    return () => clearTimeout(timeoutId);
+  }, [draft, isHistory, ticketId]);
+
+  const headerLabel = isHistory ? "Resolved transcript" : "Live support chat";
+
   return (
     <div className="p-2 md:p-4 space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-        Internal Chat & Notifications Hub
-      </h1>
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        Mirror of the doc’s chat + notification requirements: 30-day expiry, transcript retention, internal channels.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Ticket {ticketId}
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {headerLabel}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/support-tickets"
+            className="text-sm font-medium text-brand-600 hover:text-brand-500"
+          >
+            Back to tickets
+          </Link>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              isHistory
+                ? "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                : "bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-200"
+            }`}
+          >
+            {isHistory ? "History" : "Live"}
+          </span>
+        </div>
+      </div>
 
       <ComponentCard
-        title="Internal channels"
-        desc="Support, disputes and engineering chat rooms (staff-only)."
+        title="Conversation"
+        desc={
+          isHistory
+            ? "Read-only transcript for this ticket."
+            : "This is a simulated live chat feed."
+        }
       >
-        <div className="grid gap-4 md:grid-cols-2 text-sm text-gray-700 dark:text-gray-300">
-          {internalChannels.map((channel) => (
-            <div
-              key={channel.name}
-              className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5 text-brand-500" />
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {channel.name}
-                  </p>
+        <div className="p-4 space-y-4">
+          <div className="space-y-3">
+            {messages.map((message) => {
+              const isAgent = message.sender === "agent";
+              const isSystem = message.sender === "system";
+              return (
+                <div
+                  key={message.id}
+                  className={`flex ${
+                    isSystem ? "justify-center" : isAgent ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[520px] rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                      isSystem
+                        ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                        : isAgent
+                        ? "bg-brand-500/10 text-gray-900 dark:text-white"
+                        : "bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">
+                      <span>{isSystem ? "System" : isAgent ? "Agent" : "Customer"}</span>
+                      <span className="normal-case tracking-normal">
+                        {formatTime(message.timestamp)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed">{message.text}</p>
+                  </div>
                 </div>
-                {channel.unread > 0 && (
-                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-500/15 dark:text-red-300">
-                    {channel.unread} unread
-                  </span>
-                )}
+              );
+            })}
+          </div>
+
+          <div className="border-t border-gray-100 pt-4 dark:border-gray-800">
+            <div className="flex flex-col gap-3">
+              <TextArea
+                rows={3}
+                value={draft}
+                onChange={setDraft}
+                placeholder={
+                  isHistory
+                    ? "This transcript is read-only"
+                    : "Type your response"
+                }
+                disabled={isHistory}
+                className="text-gray-700 dark:text-gray-200"
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {isHistory
+                    ? "You cannot reply on resolved tickets."
+                    : "Mock realtime enabled. A reply appears after you send."}
+                </p>
+                <Button
+                  size="sm"
+                  onClick={handleSend}
+                  disabled={!draft.trim() || isHistory || isSending}
+                >
+                  {isSending ? "Sending..." : "Send reply"}
+                </Button>
               </div>
-              <p className="mt-2 text-sm">{channel.description}</p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {channel.retention}
-              </p>
             </div>
-          ))}
-        </div>
-      </ComponentCard>
-
-      <ComponentCard
-        title="Chat expiry & transcript policies"
-        desc="User chats expire at 30 days; transcripts remain for 12 months."
-      >
-        <ul className="list-disc space-y-2 pl-5 text-sm text-gray-700 dark:text-gray-300">
-          {transcriptPolicies.map((policy) => (
-            <li key={policy}>{policy}</li>
-          ))}
-        </ul>
-        <div className="mt-4 grid gap-4 md:grid-cols-2 text-sm text-gray-700 dark:text-gray-300">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-brand-500" />
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                Expiring chats
-              </p>
-            </div>
-            <p className="mt-2 text-sm">42 chats hit the 30-day limit in the next 24 hours.</p>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-gray-500 dark:text-gray-400">
-              {chatReminders.map((reminder) => (
-                <li key={reminder}>{reminder}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-emerald-500" />
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                Transcript retention
-              </p>
-            </div>
-            <p className="mt-2 text-sm">
-              Transcripts must be tagged with dispute/ticket IDs before export, and auto-delete after 12 months.
-            </p>
-          </div>
-        </div>
-      </ComponentCard>
-
-      <ComponentCard
-        title="Notifications & escalations"
-        desc="System notification rules tied to disputes, wallet holds, referrals."
-      >
-        <div className="grid gap-4 md:grid-cols-2 text-sm text-gray-700 dark:text-gray-300">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center gap-2">
-              <Timer className="w-5 h-5 text-purple-500" />
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Timed alerts</p>
-            </div>
-            <ul className="mt-3 list-disc space-y-1 pl-5">
-              {notificationRules.map((rule) => (
-                <li key={rule}>{rule}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                Escalation inboxes
-              </p>
-            </div>
-            <ul className="mt-3 list-disc space-y-1 pl-5">
-              <li>Dispute team gets wallet hold / cancellation alerts.</li>
-              <li>{`Finance sees holds > 7 days (ties to Admin Wallet).`}</li>
-              <li>Compliance alerted when watchlist users get offers.</li>
-            </ul>
           </div>
         </div>
       </ComponentCard>

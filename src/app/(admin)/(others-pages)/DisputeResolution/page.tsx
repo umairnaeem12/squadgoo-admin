@@ -1,5 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import ComponentCard from "@/components/common/ComponentCard";
 import {
   AlertTriangle,
@@ -42,7 +45,7 @@ const DISPUTES: Dispute[] = [
     type: "Marketplace",
     raisedBy: "Mia Collins (Buyer)",
     against: "Shehroz Motors (Seller)",
-    reason: "Item not as described – motorbike mechanical issues",
+    reason: "Item not as described; motorbike mechanical issues",
     status: "Open",
     amountHold: 5000,
     createdAt: "18 Feb, 2025",
@@ -144,11 +147,40 @@ const APPEAL_QUEUE = [
 ];
 
 export default function DisputeResolutionPage() {
-  const openCount = DISPUTES.filter((d) => d.status === "Open").length;
-  const inReviewCount = DISPUTES.filter((d) => d.status === "In Review").length;
-  const resolvedCount = DISPUTES.filter((d) => d.status === "Resolved").length;
+  const searchParams = useSearchParams();
+  const caseParam = searchParams.get("case");
+  const caseId = caseParam ? caseParam.toUpperCase() : null;
 
-  const totalOnHold = DISPUTES.reduce((sum, d) => sum + d.amountHold, 0);
+  const disputeRows = useMemo(() => {
+    if (!caseId) {
+      return DISPUTES;
+    }
+    const existing = DISPUTES.find((item) => item.id === caseId);
+    if (existing) {
+      return [existing, ...DISPUTES.filter((item) => item.id !== caseId)];
+    }
+    const fallback: Dispute = {
+      id: caseId,
+      type: "Marketplace",
+      raisedBy: "Auto-linked buyer",
+      against: "Auto-linked seller",
+      reason: "Auto-linked from wallet dispute. Update details as needed.",
+      status: "Open",
+      amountHold: 420,
+      createdAt: new Date().toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+    };
+    return [fallback, ...DISPUTES];
+  }, [caseId]);
+
+  const openCount = disputeRows.filter((d) => d.status === "Open").length;
+  const inReviewCount = disputeRows.filter((d) => d.status === "In Review").length;
+  const resolvedCount = disputeRows.filter((d) => d.status === "Resolved").length;
+
+  const totalOnHold = disputeRows.reduce((sum, d) => sum + d.amountHold, 0);
 
   return (
     <div className="p-2 md:p-4 space-y-4">
@@ -196,6 +228,11 @@ export default function DisputeResolutionPage() {
         title="Active disputes"
         desc="Each dispute is tied to a specific order or job and follows the evidence, mediation and re-appeal flow described in the SquadGoo specification."
       >
+        {caseId && (
+          <div className="mx-4 mt-4 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-700 dark:border-brand-500/40 dark:bg-brand-500/10 dark:text-brand-200">
+            Showing linked dispute for case {caseId}. Update details if needed.
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
@@ -212,10 +249,14 @@ export default function DisputeResolutionPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {DISPUTES.map((d) => (
+              {disputeRows.map((d) => (
                 <tr
                   key={d.id}
-                  className="transition hover:bg-gray-50 dark:hover:bg-white/5"
+                  className={`transition hover:bg-gray-50 dark:hover:bg-white/5 ${
+                    caseId === d.id
+                      ? "bg-brand-50/60 ring-1 ring-brand-200 dark:bg-brand-500/10 dark:ring-brand-500/40"
+                      : ""
+                  }`}
                 >
                   <td className="px-6 py-3 text-gray-800 dark:text-gray-200">
                     {d.id}
@@ -244,10 +285,13 @@ export default function DisputeResolutionPage() {
                     {d.createdAt}
                   </td>
                   <td className="px-6 py-3">
-                    <button className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+                    <Link
+                      href={`/DisputeChat?case=${d.id}`}
+                      className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    >
                       <MessageCircle className="w-3 h-3" />
                       Open mediator chat
-                    </button>
+                    </Link>
                   </td>
                 </tr>
               ))}
@@ -475,4 +519,5 @@ function StatusPill({ status }: { status: DisputeStatus }) {
     </span>
   );
 }
+
 

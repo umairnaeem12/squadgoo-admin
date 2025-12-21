@@ -63,7 +63,6 @@ export default function DatePicker({
           placeholder={placeholder}
           className={`h-8 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs 
   placeholder:text-gray-400 
-  text-transparent caret-transparent 
   focus:outline-hidden focus:ring-3 
   dark:bg-gray-900 dark:placeholder:text-white/30 
   bg-transparent border-gray-300  focus:outline-none 

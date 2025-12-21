@@ -36,6 +36,11 @@ const navItems: NavItem[] = [
 
 const jobSekeersItems: NavItem[] = [
   {
+    name: "My Task",
+    icon: <TableIcon />,
+    path: "/MyTask",
+  },
+  {
     name: "Reports & Reviews",
     icon: <TableIcon />,
     path: "/ApplicationsReview",

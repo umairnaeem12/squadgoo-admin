@@ -1,357 +1,537 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Users, BadgeCheck, Clock } from "lucide-react";
 import ComponentCard from "@/components/common/ComponentCard";
-import {
-  Users,
-  Mail,
-  Briefcase,
-  Calendar,
-  Search,
-  BadgeCheck,
-  User,
-  UserPlus,
-  Activity,
-  Globe,
-} from "lucide-react";
+import UserFiltersBar from "@/components/user-management/UserFiltersBar";
+import UserActionsMenu from "@/components/user-management/UserActionsMenu";
+import UserStatusBadge from "@/components/user-management/UserStatusBadge";
+import EditUserModal from "@/components/user-management/EditUserModal";
+import SuspendUserModal from "@/components/user-management/SuspendUserModal";
+import DeleteUserModal from "@/components/user-management/DeleteUserModal";
+import Pagination from "@/components/tables/Pagination";
+import Toast from "@/components/common/Toast";
+import { useToast } from "@/hooks/useToast";
+import type { UserFilters } from "@/types/user-management";
 
-export default function GroupManagement() {
-  const [selected, setSelected] = useState<any | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
+interface SquadGroup {
+  id: string;
+  name: string;
+  leaderName: string;
+  leaderEmail: string;
+  leaderId: string;
+  membersCount: number;
+  status: "active" | "inactive" | "suspended" | "pending-deletion";
+  createdAt: string;
+  updatedAt: string;
+  lastActive: string;
+  category: string;
+  appliedJobs: number;
+}
 
-  const groups = [
+const SquadAccountsPage = () => {
+  const [squads, setSquads] = useState<SquadGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<UserFilters>({
+    search: "",
+    status: "all",
+    role: "all",
+    kycStatus: "all",
+    dateFrom: "",
+    dateTo: "",
+    sortField: "createdAt",
+    sortDirection: "desc",
+  });
+
+  const [selectedSquad, setSelectedSquad] = useState<SquadGroup | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const { toasts, showToast, hideToast } = useToast();
+
+  useEffect(() => {
+    fetchSquads();
+  }, [filters]);
+
+  const fetchSquads = async () => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.append(key, value);
+    });
+
+    const response = await fetch(`/api/users/squads?${params}`);
+    const data = await response.json();
+    if (data.success) {
+      setSquads(data.data);
+    }
+    setLoading(false);
+  };
+
+  const handleStatusToggle = async (squad: SquadGroup) => {
+    const newStatus = squad.status === "active" ? "inactive" : "active";
+    
+    try {
+      const response = await fetch("/api/users/status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: squad.id, status: newStatus }),
+      });
+
+      if (response.ok) {
+        setSquads((prev) =>
+          prev.map((s) =>
+            s.id === squad.id ? { ...s, status: newStatus } : s
+          )
+        );
+        showToast(`Squad ${newStatus === "active" ? "activated" : "deactivated"} successfully`, "success");
+      }
+    } catch (error) {
+      showToast("Failed to update squad status", "error");
+    }
+  };
+
+  const handleEdit = (squad: SquadGroup) => {
+    setSelectedSquad(squad);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSuspend = (squad: SquadGroup) => {
+    setSelectedSquad(squad);
+    setIsSuspendModalOpen(true);
+  };
+
+  const handleDelete = (squad: SquadGroup) => {
+    setSelectedSquad(squad);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleBlock = async (squad: SquadGroup) => {
+    try {
+      const response = await fetch("/api/users/block", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: squad.id,
+          reason: "Admin blocked this squad",
+        }),
+      });
+
+      if (response.ok) {
+        setSquads((prev) =>
+          prev.map((s) =>
+            s.id === squad.id ? { ...s, status: "inactive" } : s
+          )
+        );
+        showToast("Squad blocked successfully. Leader notified to withdraw coins.", "warning");
+      }
+    } catch (error) {
+      showToast("Failed to block squad", "error");
+    }
+  };
+
+  const handleChat = (squad: SquadGroup) => {
+    setSelectedSquad(squad);
+    setIsChatOpen(true);
+  };
+
+  const handleSaveEdit = async (updatedData: any) => {
+    try {
+      const response = await fetch("/api/users/squads", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selectedSquad?.id, ...updatedData }),
+      });
+
+      if (response.ok) {
+        setSquads((prev) =>
+          prev.map((s) =>
+            s.id === selectedSquad?.id ? { ...s, ...updatedData } : s
+          )
+        );
+        showToast("Squad updated successfully", "success");
+        setIsEditModalOpen(false);
+      }
+    } catch (error) {
+      showToast("Failed to update squad", "error");
+    }
+  };
+
+  const handleConfirmSuspend = async (data: {
+    reason: string;
+    startDate: string;
+    endDate: string;
+  }) => {
+    try {
+      const response = await fetch("/api/users/suspend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedSquad?.id, ...data }),
+      });
+
+      if (response.ok) {
+        setSquads((prev) =>
+          prev.map((s) =>
+            s.id === selectedSquad?.id ? { ...s, status: "suspended" } : s
+          )
+        );
+        showToast(`Squad suspended from ${data.startDate} to ${data.endDate}`, "warning");
+        setIsSuspendModalOpen(false);
+      }
+    } catch (error) {
+      showToast("Failed to suspend squad", "error");
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await fetch("/api/users/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedSquad?.id }),
+      });
+
+      if (response.ok) {
+        setSquads((prev) =>
+          prev.map((s) =>
+            s.id === selectedSquad?.id ? { ...s, status: "pending-deletion" } : s
+          )
+        );
+        showToast("Squad deletion scheduled. Will be deleted in 30 days.", "warning");
+        setIsDeleteModalOpen(false);
+      }
+    } catch (error) {
+      showToast("Failed to schedule deletion", "error");
+    }
+  };
+
+  const handleViewDetails = (squad: SquadGroup) => {
+    setSelectedSquad(squad);
+    setIsDetailModalOpen(true);
+  };
+
+  const stats = [
     {
-      id: 1,
-      name: "Frontend Squad",
-      leader: "Ayesha Khan",
-      leaderEmail: "ayesha.khan@email.com",
-      membersCount: 4,
-      appliedJobs: 2,
-      createdAt: "20 Feb, 2025",
-      status: "Active",
-      lastActive: "10 Nov, 2025",
-      category: "Frontend Development",
-      description:
-        "Focused on building clean, scalable user interfaces and collaborating on frontend-focused projects across SquadGoo.",
-      members: [
-        {
-          name: "Ayesha Khan",
-          email: "ayesha.khan@email.com",
-          role: "Team Leader",
-          expertise: "React / Next.js / UI Engineering",
-        },
-        {
-          name: "Ali Raza",
-          email: "ali.raza@email.com",
-          role: "Frontend Developer",
-          expertise: "TypeScript / Tailwind / Redux",
-        },
-        {
-          name: "Fatima Noor",
-          email: "fatima.noor@email.com",
-          role: "UI Designer",
-          expertise: "Figma / Design Systems",
-        },
-        {
-          name: "Bilal Ahmed",
-          email: "bilal.ahmed@email.com",
-          role: "QA Engineer",
-          expertise: "Jest / Cypress / Automation",
-        },
-      ],
-      appliedTo: [
-        { jobTitle: "Frontend Developer", recruiter: "TalentMatch HR" },
-        { jobTitle: "UI Engineer", recruiter: "TechBridge Recruiters" },
-      ],
-      history: [
-        { event: "Group created", date: "20 Feb, 2025" },
-        { event: "Applied to Frontend Developer role", date: "22 Feb, 2025" },
-        { event: "Shortlisted by TalentMatch HR", date: "25 Feb, 2025" },
-      ],
+      title: "Total Squads",
+      value: squads.length.toString(),
+      color: "text-purple-600",
     },
     {
-      id: 2,
-      name: "Fullstack Force",
-      leader: "Michael Brown",
-      leaderEmail: "michael.brown@email.com",
-      membersCount: 3,
-      appliedJobs: 1,
-      createdAt: "15 Mar, 2025",
-      status: "Pending",
-      lastActive: "05 Nov, 2025",
-      category: "Fullstack Development",
-      description:
-        "Cross-functional team working on end-to-end product development using modern stacks and cloud integration.",
-      members: [
-        {
-          name: "Michael Brown",
-          email: "michael.brown@email.com",
-          role: "Team Leader",
-          expertise: "Node.js / PostgreSQL / TypeORM",
-        },
-        {
-          name: "John Doe",
-          email: "john.doe@email.com",
-          role: "Frontend Developer",
-          expertise: "React / Next.js / Zustand",
-        },
-        {
-          name: "Sara Lee",
-          email: "sara.lee@email.com",
-          role: "UI/UX Designer",
-          expertise: "Figma / Prototyping / Branding",
-        },
-      ],
-      appliedTo: [
-        { jobTitle: "Fullstack Developer", recruiter: "CreativeX Studio" },
-      ],
-      history: [
-        { event: "Group created", date: "15 Mar, 2025" },
-        { event: "Applied to Fullstack Developer role", date: "18 Mar, 2025" },
-      ],
+      title: "Active Squads",
+      value: squads.filter((s) => s.status === "active").length.toString(),
+      color: "text-green-600",
+    },
+    {
+      title: "Total Members",
+      value: squads.reduce((acc, s) => acc + s.membersCount, 0).toString(),
+      color: "text-blue-600",
+    },
+    {
+      title: "Applications",
+      value: squads.reduce((acc, s) => acc + s.appliedJobs, 0).toString(),
+      color: "text-orange-600",
     },
   ];
 
   return (
-    <div className="p-2 md:p-4 space-y-4">
-      <p className="text-xl font-semibold text-gray-900 dark:text-white">
-        Group Management
-      </p>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Squad Accounts Management
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Manage all squad groups and team accounts
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {stats.map((stat, index) => (
+          <div
+            key={index}
+            className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700"
+          >
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              {stat.title}
+            </p>
+            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+          </div>
+        ))}
+      </div>
 
       <ComponentCard
-        title="All Jobseeker Groups"
-        desc="Manage and review groups formed by jobseekers for team-based job applications"
-        headerRight={
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Search group..."
-              className="border border-gray-300 dark:border-gray-800 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-            <button className="p-2 border rounded-lg border-gray-300 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-white/5 transition">
-              <Search className="w-4 h-4 text-gray-700 dark:text-gray-300" />
-            </button>
-          </div>
-        }
+        title="Squad Accounts"
+        desc="View and manage all squad groups"
       >
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
-              <tr>
-                <th className="px-6 py-3 font-medium">Group Name</th>
-                <th className="px-6 py-3 font-medium">Leader</th>
-                <th className="px-6 py-3 font-medium">Email</th>
-                <th className="px-6 py-3 font-medium">Members</th>
-                <th className="px-6 py-3 font-medium">Applied Jobs</th>
-                <th className="px-6 py-3 font-medium">Created On</th>
-                <th className="px-6 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {groups.map((g) => (
-                <tr
-                  key={g.id}
-                  onClick={() => {
-                    setSelected(g);
-                    setActiveTab("overview");
-                  }}
-                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition"
-                >
-                  <td className="px-6 py-3 font-medium text-gray-900 dark:text-white">
-                    {g.name}
-                  </td>
-                  <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
-                    {g.leader}
-                  </td>
-                  <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
-                    {g.leaderEmail}
-                  </td>
-                  <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
-                    {g.membersCount}
-                  </td>
-                  <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
-                    {g.appliedJobs}
-                  </td>
-                  <td className="px-6 py-3 text-gray-700 dark:text-gray-300">
-                    {g.createdAt}
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        g.status === "Active"
-                          ? "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-400"
-                          : "bg-yellow-50 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400"
-                      }`}
-                    >
-                      {g.status}
-                    </span>
-                  </td>
+        <UserFiltersBar filters={filters} onFiltersChange={setFilters} />
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Squad Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Leader
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Members
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Applied Jobs
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Last Active
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {squads.map((squad) => (
+                  <tr
+                    key={squad.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                    onClick={() => handleViewDetails(squad)}
+                  >
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                          <Users className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {squad.name}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {squad.id}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {squad.leaderName}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {squad.leaderEmail}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {squad.membersCount}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {squad.category}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {squad.appliedJobs}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {new Date(squad.lastActive).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <UserStatusBadge status={squad.status} />
+                    </td>
+                    <td
+                      className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <UserActionsMenu
+                        user={squad as any}
+                        onEdit={() => handleEdit(squad)}
+                        onChat={() => handleChat(squad)}
+                        onStatusToggle={() => handleStatusToggle(squad)}
+                        onSuspend={() => handleSuspend(squad)}
+                        onBlock={() => handleBlock(squad)}
+                        onDelete={() => handleDelete(squad)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </ComponentCard>
 
-      {/* === Modal === */}
-      {selected && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-3xl shadow-xl overflow-hidden"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-xl">
-                  <Users className="text-blue-600 dark:text-blue-400 w-6 h-6" />
-                </div>
+      {/* Detail Modal */}
+      {isDetailModalOpen && selectedSquad && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {selected.name}
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {selectedSquad.name}
                   </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Led by {selected.leader} • {selected.membersCount} members
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {selectedSquad.id}
                   </p>
                 </div>
-              </div>
-              {selected.status === "Active" && (
-                <BadgeCheck className="text-green-500 w-6 h-6" />
-              )}
-            </div>
-
-            {/* Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 text-sm font-medium text-gray-700 dark:text-gray-300">
-              {[
-                { key: "overview", label: "Overview" },
-                { key: "members", label: "Members" },
-                { key: "applied", label: "Applied Jobs" },
-                { key: "performance", label: "Performance" },
-                { key: "history", label: "History" },
-              ].map((tab) => (
                 <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-4 py-3 transition ${
-                    activeTab === tab.key
-                      ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-                      : "hover:text-blue-500"
-                  }`}
+                  onClick={() => setIsDetailModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  {tab.label}
+                  ✕
                 </button>
-              ))}
-            </div>
+              </div>
 
-            {/* Content */}
-            <div className="p-6 text-sm text-gray-700 dark:text-gray-300 max-h-[70vh] overflow-y-auto">
-              {activeTab === "overview" && (
-                <div className="space-y-2">
-                  <p>
-                    <strong>Group Category:</strong> {selected.category}
-                  </p>
-                  <p>
-                    <strong>Leader Email:</strong> {selected.leaderEmail}
-                  </p>
-                  <p>
-                    <strong>Created On:</strong> {selected.createdAt}
-                  </p>
-                  <p>
-                    <strong>Last Active:</strong> {selected.lastActive}
-                  </p>
-                  <p>
-                    <strong>Description:</strong> {selected.description}
-                  </p>
-                </div>
-              )}
-
-              {activeTab === "members" && (
-                <div className="space-y-3">
-                  {selected.members.map((m: any, i: number) => (
-                    <div
-                      key={i}
-                      className="flex justify-between items-center border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {m.name}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {m.role} • {m.expertise}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        {m.email}
-                      </div>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                    Squad Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Squad Name
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {selectedSquad.name}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {activeTab === "applied" && (
-                <div className="space-y-2">
-                  {selected.appliedTo.map((a: any, i: number) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-2 text-sm border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2"
-                    >
-                      <Briefcase className="w-4 h-4 text-gray-400" />
-                      <span>
-                        {a.jobTitle} —{" "}
-                        <span className="text-gray-500">{a.recruiter}</span>
-                      </span>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Category
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {selectedSquad.category}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {activeTab === "performance" && (
-                <div className="space-y-3">
-                  <p>
-                    <strong>Applications Submitted:</strong>{" "}
-                    {selected.appliedJobs}
-                  </p>
-                  <p>
-                    <strong>Members Active:</strong> {selected.membersCount}
-                  </p>
-                  <p>
-                    <strong>Status:</strong> {selected.status}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Activity className="w-4 h-4 text-blue-500" />
-                    <span>Overall engagement: High</span>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Leader Name
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {selectedSquad.leaderName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Leader Email
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {selectedSquad.leaderEmail}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Total Members
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {selectedSquad.membersCount}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Applied Jobs
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {selectedSquad.appliedJobs}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Status
+                      </p>
+                      <UserStatusBadge status={selectedSquad.status} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Last Active
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {new Date(selectedSquad.lastActive).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Created At
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {new Date(selectedSquad.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Updated At
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {new Date(selectedSquad.updatedAt).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              )}
-
-              {activeTab === "history" && (
-                <div className="space-y-2">
-                  {selected.history.map((h: any, i: number) => (
-                    <p key={i}>
-                      <strong>{h.event}</strong> —{" "}
-                      <span className="text-gray-500">{h.date}</span>
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-end border-t border-gray-200 dark:border-gray-800 p-4">
-              <button
-                onClick={() => setSelected(null)}
-                className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300"
-              >
-                Close
-              </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && selectedSquad && (
+        <EditUserModal
+          user={selectedSquad as any}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleSaveEdit as any}
+        />
+      )}
+
+      {/* Suspend Modal */}
+      {isSuspendModalOpen && selectedSquad && (
+        <SuspendUserModal
+          userName={selectedSquad.name}
+          isOpen={isSuspendModalOpen}
+          onClose={() => setIsSuspendModalOpen(false)}
+          onConfirm={handleConfirmSuspend}
+        />
+      )}
+
+      {/* Delete Modal */}
+      {isDeleteModalOpen && selectedSquad && (
+        <DeleteUserModal
+          userName={selectedSquad.name}
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
+
+      {/* Toast Notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => hideToast(toast.id)}
+        />
+      ))}
     </div>
   );
-}
+};
+
+export default SquadAccountsPage;

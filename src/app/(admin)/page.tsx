@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import DashboardPageLayout from "@/components/dashboard/DashboardPageLayout";
+import StaffDashboard from "@/components/staff-dashboard/StaffDashboard";
 
 export const metadata: Metadata = {
-  title: "SquadGoo Dashboard",
-  description: "Internal admin panel for SquadGoo platform controls and reports",
+  title: "Staff Dashboard",
+  description: "Role-based staff dashboard focused on today's responsibilities.",
 };
 
-export default function Ecommerce() {
-  return <DashboardPageLayout />;
+export default function StaffDashboardPage() {
+  return <StaffDashboard />;
 }

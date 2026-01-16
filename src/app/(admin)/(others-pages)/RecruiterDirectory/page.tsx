@@ -6,14 +6,13 @@ import ComponentCard from "@/components/common/ComponentCard";
 import UserFiltersBar from "@/components/user-management/UserFiltersBar";
 import UserActionsMenu from "@/components/user-management/UserActionsMenu";
 import UserStatusBadge from "@/components/user-management/UserStatusBadge";
+import DeleteUserModal from "@/components/user-management/DeleteUserModal";
 import EditUserModal from "@/components/user-management/EditUserModal";
 import SuspendUserModal from "@/components/user-management/SuspendUserModal";
-import DeleteUserModal from "@/components/user-management/DeleteUserModal";
-import RecruiterDetailModal from "@/components/user-management/RecruiterDetailModal";
 import Pagination from "@/components/tables/Pagination";
 import Toast from "@/components/common/Toast";
 import { useToast } from "@/hooks/useToast";
-import { Building2, Mail, Briefcase, Calendar, MapPin, Users, CheckCircle2, Clock, XCircle, BadgeCheck } from "lucide-react";
+import { Building2, Mail, Briefcase, Calendar, MapPin, CheckCircle2, Clock, XCircle, BadgeCheck } from "lucide-react";
 import type { Recruiter, UserFilters, UserStatus } from "@/types/user-management";
 
 export default function RecruiterDirectory() {
@@ -28,12 +27,8 @@ export default function RecruiterDirectory() {
   const [itemsPerPage] = useState(12);
   
   // Modal states
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Detail modal
-  const [detailUser, setDetailUser] = useState<Recruiter | null>(null);
 
   const [filters, setFilters] = useState<UserFilters>({
     search: "",
@@ -73,31 +68,6 @@ export default function RecruiterDirectory() {
       console.error("Error fetching recruiters:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleEdit = (user: Recruiter) => {
-    setSelectedUser(user);
-    setShowEditModal(true);
-  };
-
-  const handleSaveEdit = async (updates: Partial<Recruiter>) => {
-    try {
-      const response = await fetch("/api/users/recruiters", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedUser?.id, ...updates }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        fetchRecruiters();
-        setShowEditModal(false);
-        showToast("Recruiter updated successfully", "success");
-      }
-    } catch (error) {
-      console.error("Error updating recruiter:", error);
-      showToast("Failed to update recruiter", "error");
     }
   };
 
@@ -182,6 +152,10 @@ export default function RecruiterDirectory() {
     setShowDeleteModal(true);
   };
 
+  const navigateToProfile = (user: Recruiter) => {
+    router.push(`/admin/profile/recruiter/${user.id}`);
+  };
+
   const handleConfirmDelete = async () => {
     try {
       const response = await fetch("/api/users/delete", {
@@ -210,30 +184,6 @@ export default function RecruiterDirectory() {
   const handleChat = (user: Recruiter) => {
     // Redirect to chat page instead of opening modal
     router.push(`/chat?userId=${user.id}&userName=${user.firstName}%20${user.lastName}`);
-  };
-
-  const handleUpdateUser = async (updates: Partial<Recruiter>) => {
-    try {
-      const response = await fetch("/api/users/recruiters", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: detailUser?.id, ...updates }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setRecruiters(prev => prev.map(r => 
-          r.id === detailUser?.id ? { ...r, ...updates } : r
-        ));
-        if (detailUser) {
-          setDetailUser({ ...detailUser, ...updates });
-        }
-        showToast("Recruiter updated successfully", "success");
-      }
-    } catch (error) {
-      console.error("Error updating recruiter:", error);
-      showToast("Failed to update recruiter", "error");
-    }
   };
 
   const formatDate = (dateString: string) => {
@@ -331,7 +281,7 @@ export default function RecruiterDirectory() {
                   <tr
                     key={rec.id}
                     className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group cursor-pointer"
-                    onClick={() => setDetailUser(rec)}
+                    onClick={() => navigateToProfile(rec)}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -398,7 +348,7 @@ export default function RecruiterDirectory() {
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <UserActionsMenu
                         user={rec}
-                        onEdit={() => handleEdit(rec)}
+                        onViewProfile={() => navigateToProfile(rec)}
                         onChat={() => handleChat(rec)}
                         onBlock={() => handleBlock(rec)}
                         onSuspend={() => handleSuspend(rec)}
@@ -426,24 +376,6 @@ export default function RecruiterDirectory() {
       </ComponentCard>
 
       {/* Modals */}
-      {detailUser && (
-        <RecruiterDetailModal
-          isOpen={!!detailUser}
-          onClose={() => setDetailUser(null)}
-          user={detailUser}
-          onUpdate={handleUpdateUser}
-        />
-      )}
-
-      {showEditModal && selectedUser && (
-        <EditUserModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onSave={handleSaveEdit as any}
-          user={selectedUser}
-        />
-      )}
-
       {showSuspendModal && selectedUser && (
         <SuspendUserModal
           isOpen={showSuspendModal}

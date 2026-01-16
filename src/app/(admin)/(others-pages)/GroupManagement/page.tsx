@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Users, BadgeCheck, Clock } from "lucide-react";
+import { Users } from "lucide-react";
 import ComponentCard from "@/components/common/ComponentCard";
 import UserFiltersBar from "@/components/user-management/UserFiltersBar";
 import UserActionsMenu from "@/components/user-management/UserActionsMenu";
 import UserStatusBadge from "@/components/user-management/UserStatusBadge";
-import EditUserModal from "@/components/user-management/EditUserModal";
 import SuspendUserModal from "@/components/user-management/SuspendUserModal";
 import DeleteUserModal from "@/components/user-management/DeleteUserModal";
 import Pagination from "@/components/tables/Pagination";
@@ -31,6 +30,7 @@ interface SquadGroup {
 }
 
 const SquadAccountsPage = () => {
+  const router = useRouter();
   const [squads, setSquads] = useState<SquadGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<UserFilters>({
@@ -45,11 +45,8 @@ const SquadAccountsPage = () => {
   });
 
   const [selectedSquad, setSelectedSquad] = useState<SquadGroup | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const { toasts, showToast, hideToast } = useToast();
 
@@ -95,11 +92,6 @@ const SquadAccountsPage = () => {
     }
   };
 
-  const handleEdit = (squad: SquadGroup) => {
-    setSelectedSquad(squad);
-    setIsEditModalOpen(true);
-  };
-
   const handleSuspend = (squad: SquadGroup) => {
     setSelectedSquad(squad);
     setIsSuspendModalOpen(true);
@@ -108,6 +100,10 @@ const SquadAccountsPage = () => {
   const handleDelete = (squad: SquadGroup) => {
     setSelectedSquad(squad);
     setIsDeleteModalOpen(true);
+  };
+
+  const navigateToProfile = (squad: SquadGroup) => {
+    router.push(`/admin/profile/squad/${squad.id}`);
   };
 
   const handleBlock = async (squad: SquadGroup) => {
@@ -135,30 +131,7 @@ const SquadAccountsPage = () => {
   };
 
   const handleChat = (squad: SquadGroup) => {
-    setSelectedSquad(squad);
-    setIsChatOpen(true);
-  };
-
-  const handleSaveEdit = async (updatedData: any) => {
-    try {
-      const response = await fetch("/api/users/squads", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedSquad?.id, ...updatedData }),
-      });
-
-      if (response.ok) {
-        setSquads((prev) =>
-          prev.map((s) =>
-            s.id === selectedSquad?.id ? { ...s, ...updatedData } : s
-          )
-        );
-        showToast("Squad updated successfully", "success");
-        setIsEditModalOpen(false);
-      }
-    } catch (error) {
-      showToast("Failed to update squad", "error");
-    }
+    router.push(`/chat?userId=${squad.id}&userName=${encodeURIComponent(squad.name)}`);
   };
 
   const handleConfirmSuspend = async (data: {
@@ -207,11 +180,6 @@ const SquadAccountsPage = () => {
     } catch (error) {
       showToast("Failed to schedule deletion", "error");
     }
-  };
-
-  const handleViewDetails = (squad: SquadGroup) => {
-    setSelectedSquad(squad);
-    setIsDetailModalOpen(true);
   };
 
   const stats = [
@@ -309,7 +277,7 @@ const SquadAccountsPage = () => {
                   <tr
                     key={squad.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                    onClick={() => handleViewDetails(squad)}
+                    onClick={() => navigateToProfile(squad)}
                   >
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center">
@@ -361,7 +329,7 @@ const SquadAccountsPage = () => {
                     >
                       <UserActionsMenu
                         user={squad as any}
-                        onEdit={() => handleEdit(squad)}
+                        onViewProfile={() => navigateToProfile(squad)}
                         onChat={() => handleChat(squad)}
                         onStatusToggle={() => handleStatusToggle(squad)}
                         onSuspend={() => handleSuspend(squad)}
@@ -376,130 +344,6 @@ const SquadAccountsPage = () => {
           </div>
         )}
       </ComponentCard>
-
-      {/* Detail Modal */}
-      {isDetailModalOpen && selectedSquad && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {selectedSquad.name}
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {selectedSquad.id}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsDetailModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                    Squad Information
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Squad Name
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {selectedSquad.name}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Category
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {selectedSquad.category}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Leader Name
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {selectedSquad.leaderName}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Leader Email
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {selectedSquad.leaderEmail}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Total Members
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {selectedSquad.membersCount}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Applied Jobs
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {selectedSquad.appliedJobs}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Status
-                      </p>
-                      <UserStatusBadge status={selectedSquad.status} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Last Active
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {new Date(selectedSquad.lastActive).toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Created At
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {new Date(selectedSquad.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Updated At
-                      </p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {new Date(selectedSquad.updatedAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {isEditModalOpen && selectedSquad && (
-        <EditUserModal
-          user={selectedSquad as any}
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleSaveEdit as any}
-        />
-      )}
 
       {/* Suspend Modal */}
       {isSuspendModalOpen && selectedSquad && (

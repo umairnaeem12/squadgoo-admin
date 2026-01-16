@@ -4,6 +4,7 @@ import '../globals.css';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { NotificationProvider } from '@/context/NotificationContext';
+import { StaffRoleProvider } from '@/context/StaffRoleContext';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -19,7 +20,9 @@ export default function RootLayout({
       <body className={`${outfit.className} dark:bg-gray-900`}>
         <ThemeProvider>
           <NotificationProvider>
-            <SidebarProvider>{children}</SidebarProvider>
+            <StaffRoleProvider>
+              <SidebarProvider>{children}</SidebarProvider>
+            </StaffRoleProvider>
           </NotificationProvider>
         </ThemeProvider>
       </body>

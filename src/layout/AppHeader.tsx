@@ -3,6 +3,7 @@ import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
+import { useStaffRole } from "@/context/StaffRoleContext";
 import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,8 +15,10 @@ type SearchEntry = {
   subtitle: string;
   href: string;
   keywords: string[];
-  access: boolean;
+  restricted?: boolean;
 };
+
+type SearchResult = SearchEntry & { access: boolean };
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -24,6 +27,7 @@ const AppHeader: React.FC = () => {
   const [searchToast, setSearchToast] = useState<string | null>(null);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const { canAccessPath } = useStaffRole();
   const router = useRouter();
 
   const handleToggle = () => {
@@ -84,7 +88,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Live support chat assigned",
         href: "/AdminChat?ticket=323538&mode=live",
         keywords: ["umair", "chat", "support", "ticket", "323538"],
-        access: true,
       },
       {
         id: "search-dispute-umair",
@@ -92,7 +95,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Marketplace dispute chat",
         href: "/DisputeChat?case=LIST-5001",
         keywords: ["umair", "dispute", "marketplace", "list-5001"],
-        access: true,
       },
       {
         id: "search-wallet-umair",
@@ -100,7 +102,7 @@ const AppHeader: React.FC = () => {
         subtitle: "Wallet transaction details",
         href: "/AdminWallet",
         keywords: ["umair", "transaction", "wallet", "tx-9051"],
-        access: false,
+        restricted: true,
       },
       {
         id: "search-task-umair",
@@ -108,7 +110,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Assigned task",
         href: "/MyTask",
         keywords: ["umair", "task", "onboarding"],
-        access: true,
       },
       {
         id: "search-notification-umair",
@@ -116,7 +117,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Unread notification entry",
         href: "/Notifications",
         keywords: ["umair", "notification"],
-        access: true,
       },
       {
         id: "search-chat-jasmine",
@@ -124,7 +124,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Live support chat assigned",
         href: "/AdminChat?ticket=323537&mode=live",
         keywords: ["jasmine", "patel", "chat", "support", "323537"],
-        access: true,
       },
       {
         id: "search-chat-ravi",
@@ -132,7 +131,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Resolved chat transcript",
         href: "/AdminChat?ticket=323534&mode=history",
         keywords: ["ravi", "kumar", "chat", "history", "323534"],
-        access: true,
       },
       {
         id: "search-dispute-mia",
@@ -140,7 +138,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Marketplace dispute chat",
         href: "/DisputeChat?case=LIST-7002",
         keywords: ["mia", "collins", "dispute", "marketplace", "list-7002"],
-        access: true,
       },
       {
         id: "search-dispute-omar",
@@ -148,7 +145,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Open mediation thread",
         href: "/DisputeChat?case=LIST-7014",
         keywords: ["omar", "daniels", "dispute", "mediation", "list-7014"],
-        access: true,
       },
       {
         id: "search-wallet-isha",
@@ -156,7 +152,7 @@ const AppHeader: React.FC = () => {
         subtitle: "Wallet transaction details",
         href: "/AdminWallet",
         keywords: ["isha", "tariq", "transaction", "wallet", "tx-9078"],
-        access: false,
+        restricted: true,
       },
       {
         id: "search-wallet-priya",
@@ -164,7 +160,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Refund status review",
         href: "/AdminWallet",
         keywords: ["priya", "singh", "refund", "wallet", "rf-132"],
-        access: true,
       },
       {
         id: "search-task-sarah",
@@ -172,7 +167,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Assigned task",
         href: "/MyTask",
         keywords: ["sarah", "ellis", "task", "sla"],
-        access: true,
       },
       {
         id: "search-task-hina",
@@ -180,7 +174,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Assigned task",
         href: "/MyTask",
         keywords: ["hina", "noor", "task", "escalation"],
-        access: true,
       },
       {
         id: "search-notification-omar",
@@ -188,7 +181,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Unread notification entry",
         href: "/Notifications",
         keywords: ["omar", "notification", "reply"],
-        access: true,
       },
       {
         id: "search-notification-sana",
@@ -196,7 +188,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Finance update",
         href: "/Notifications",
         keywords: ["sana", "withdrawal", "notification"],
-        access: true,
       },
       {
         id: "search-wallet",
@@ -204,7 +195,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Finance operations",
         href: "/AdminWallet",
         keywords: ["wallet", "finance", "transactions", "refunds"],
-        access: true,
       },
       {
         id: "search-dispute-center",
@@ -212,7 +202,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Evidence and mediation",
         href: "/DisputeResolution",
         keywords: ["dispute", "resolution", "mediation"],
-        access: true,
       },
       {
         id: "search-my-task",
@@ -220,7 +209,6 @@ const AppHeader: React.FC = () => {
         subtitle: "Assigned tasks",
         href: "/MyTask",
         keywords: ["task", "assigned", "today"],
-        access: true,
       },
       {
         id: "search-notifications",
@@ -228,7 +216,6 @@ const AppHeader: React.FC = () => {
         subtitle: "All alerts and updates",
         href: "/Notifications",
         keywords: ["notification", "alerts", "updates"],
-        access: true,
       },
       {
         id: "search-internal-chat",
@@ -236,18 +223,17 @@ const AppHeader: React.FC = () => {
         subtitle: "Staff collaboration",
         href: "/InternalChat",
         keywords: ["internal", "chat", "staff"],
-        access: true,
       },
     ],
     []
   );
 
-  const filteredResults = useMemo(() => {
+  const filteredResults: SearchResult[] = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) {
       return [];
     }
-    return searchIndex.filter((entry) => {
+    const matches = searchIndex.filter((entry) => {
       if (entry.label.toLowerCase().includes(query)) {
         return true;
       }
@@ -256,7 +242,11 @@ const AppHeader: React.FC = () => {
       }
       return entry.keywords.some((keyword) => keyword.includes(query));
     });
-  }, [searchQuery, searchIndex]);
+    return matches.map((entry) => ({
+      ...entry,
+      access: entry.restricted ? false : canAccessPath(entry.href),
+    }));
+  }, [searchQuery, searchIndex, canAccessPath]);
 
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">

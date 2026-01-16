@@ -5,6 +5,16 @@ export type UserRole = "jobseeker" | "recruiter" | "individual" | "squad-member"
 export type SortDirection = "asc" | "desc";
 export type SortField = "name" | "email" | "createdAt" | "status" | "role";
 
+export interface StaffNote {
+  id: string;
+  action: string;
+  reason: string;
+  staffId: string;
+  staffName?: string;
+  timestamp: string;
+  meta?: Record<string, string>;
+}
+
 export interface BaseUser {
   id: string;
   firstName: string;
@@ -21,6 +31,7 @@ export interface BaseUser {
   kycStatus: "verified" | "pending" | "rejected";
   verified?: boolean;
   badges?: string[];
+  staffNotes?: StaffNote[];
 }
 
 export interface JobSeeker extends BaseUser {

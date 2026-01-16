@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   MoreVertical,
-  Edit,
+  Eye,
   MessageSquare,
   Ban,
   Trash2,
@@ -15,7 +15,7 @@ import type { AnyUser, UserStatus } from "@/types/user-management";
 
 interface UserActionsMenuProps {
   user: AnyUser;
-  onEdit: () => void;
+  onViewProfile: () => void;
   onChat: () => void;
   onBlock: () => void;
   onSuspend: () => void;
@@ -25,7 +25,7 @@ interface UserActionsMenuProps {
 
 export default function UserActionsMenu({
   user,
-  onEdit,
+  onViewProfile,
   onChat,
   onBlock,
   onSuspend,
@@ -68,11 +68,11 @@ export default function UserActionsMenu({
       {isOpen && (
         <div className="absolute right-0 mt-2 w-56 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg z-10 py-1">
           <button
-            onClick={() => handleAction(onEdit)}
+            onClick={() => handleAction(onViewProfile)}
             className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
-            <Edit className="h-4 w-4" />
-            <span>Edit Details</span>
+            <Eye className="h-4 w-4" />
+            <span>View Profile</span>
           </button>
 
           <button
@@ -85,7 +85,7 @@ export default function UserActionsMenu({
 
           <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
 
-          {user.status === "active" ? (
+          {user.status === "active" && (
             <button
               onClick={() => handleAction(onStatusToggle)}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition"
@@ -93,23 +93,26 @@ export default function UserActionsMenu({
               <PowerOff className="h-4 w-4" />
               <span>Deactivate</span>
             </button>
-          ) : (
+          )}
+          {(user.status === "inactive" || user.status === "pending-deletion" || user.status === "suspended") && (
             <button
               onClick={() => handleAction(onStatusToggle)}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-500/10 transition"
             >
               <Power className="h-4 w-4" />
-              <span>Activate</span>
+              <span>{user.status === "suspended" ? "Unsuspend" : "Activate"}</span>
             </button>
           )}
 
-          <button
-            onClick={() => handleAction(onSuspend)}
-            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition"
-          >
-            <Clock className="h-4 w-4" />
-            <span>Suspend User</span>
-          </button>
+          {user.status !== "suspended" && (
+            <button
+              onClick={() => handleAction(onSuspend)}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition"
+            >
+              <Clock className="h-4 w-4" />
+              <span>Suspend User</span>
+            </button>
+          )}
 
           <button
             onClick={() => handleAction(onBlock)}

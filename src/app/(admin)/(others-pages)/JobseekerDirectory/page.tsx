@@ -6,14 +6,12 @@ import ComponentCard from "@/components/common/ComponentCard";
 import UserFiltersBar from "@/components/user-management/UserFiltersBar";
 import UserActionsMenu from "@/components/user-management/UserActionsMenu";
 import UserStatusBadge from "@/components/user-management/UserStatusBadge";
-import EditUserModal from "@/components/user-management/EditUserModal";
-import SuspendUserModal from "@/components/user-management/SuspendUserModal";
+import StatusReasonModal from "@/components/user-management/StatusReasonModal";
 import DeleteUserModal from "@/components/user-management/DeleteUserModal";
-import JobSeekerDetailModal from "@/components/user-management/JobSeekerDetailModal";
 import Pagination from "@/components/tables/Pagination";
 import Toast from "@/components/common/Toast";
 import { useToast } from "@/hooks/useToast";
-import { User, Mail, Briefcase, Calendar, MapPin, Users, CheckCircle2, Clock, XCircle, Download } from "lucide-react";
+import { User, Mail, Briefcase, Calendar, MapPin, Users, CheckCircle2, Clock, XCircle } from "lucide-react";
 import type { JobSeeker, UserFilters, UserStatus } from "@/types/user-management";
 
 export default function JobseekerDirectory() {
@@ -28,13 +26,11 @@ export default function JobseekerDirectory() {
   const [itemsPerPage] = useState(12); // 10-14 users per page
   
   // Modal states
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Detail modal
-  const [detailUser, setDetailUser] = useState<JobSeeker | null>(null);
-  const [activeTab, setActiveTab] = useState("basic");
+  const [statusModal, setStatusModal] = useState<{
+    user: JobSeeker | null;
+    action: "activate" | "deactivate" | "unsuspend" | "suspend";
+  } | null>(null);
 
   const [filters, setFilters] = useState<UserFilters>({
     search: "",
@@ -68,7 +64,11 @@ export default function JobseekerDirectory() {
       const data = await response.json();
       
       if (data.success) {
-        setJobseekers(data.data);
+        const withNotes = (data.data as JobSeeker[]).map((js) => ({
+          ...js,
+          staffNotes: js.staffNotes ?? [],
+        }));
+        setJobseekers(withNotes);
       }
     } catch (error) {
       console.error("Error fetching jobseekers:", error);
@@ -77,85 +77,20 @@ export default function JobseekerDirectory() {
     }
   };
 
-  const handleEdit = (user: JobSeeker) => {
+  const handleToggleStatus = (user: JobSeeker) => {
+    const action =
+      user.status === "active"
+        ? "deactivate"
+        : user.status === "suspended"
+        ? "unsuspend"
+        : "activate";
     setSelectedUser(user);
-    setShowEditModal(true);
-  };
-
-  const handleSaveEdit = async (updates: Partial<JobSeeker>) => {
-    try {
-      const response = await fetch("/api/users/jobseekers", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedUser?.id, ...updates }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        fetchJobseekers();
-        setShowEditModal(false);
-        showToast("User updated successfully");
-      }
-    } catch (error) {
-      console.error("Error updating user:", error);
-      showToast("Failed to update user", "error");
-    }
-  };
-
-  const handleToggleStatus = async (user: JobSeeker) => {
-    const newStatus: UserStatus = user.status === "active" ? "inactive" : "active";
-    
-    try {
-      const response = await fetch("/api/users/status", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, status: newStatus }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        // Update local state immediately
-        setJobseekers(prev => prev.map(js => 
-          js.id === user.id ? { ...js, status: newStatus } : js
-        ));
-        showToast(`User ${newStatus === "active" ? "activated" : "deactivated"} successfully`, "success");
-      }
-    } catch (error) {
-      console.error("Error updating status:", error);
-      showToast("Failed to update status", "error");
-    }
+    setStatusModal({ user, action });
   };
 
   const handleSuspend = (user: JobSeeker) => {
     setSelectedUser(user);
-    setShowSuspendModal(true);
-  };
-
-  const handleConfirmSuspend = async (data: { reason: string; startDate: string; endDate: string }) => {
-    try {
-      const response = await fetch("/api/users/suspend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: selectedUser?.id,
-          ...data,
-          notifyUser: true,
-        }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        // Update local state to reflect the new status
-        setJobseekers(prev => prev.map(js => 
-          js.id === selectedUser?.id ? { ...js, status: "suspended" } : js
-        ));
-        setShowSuspendModal(false);
-        showToast("User suspended successfully. User has been notified.", "success");
-      }
-    } catch (error) {
-      console.error("Error suspending user:", error);
-      showToast("Failed to suspend user", "error");
-    }
+    setStatusModal({ user, action: "suspend" });
   };
 
   const handleBlock = async (user: JobSeeker) => {
@@ -185,6 +120,10 @@ export default function JobseekerDirectory() {
   const handleDelete = (user: JobSeeker) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
+  };
+
+  const navigateToProfile = (user: JobSeeker) => {
+    router.push(`/admin/profile/jobseeker/${user.id}`);
   };
 
   const handleConfirmDelete = async () => {
@@ -218,28 +157,47 @@ export default function JobseekerDirectory() {
     router.push(`/chat?userId=${user.id}&userName=${user.firstName}%20${user.lastName}`);
   };
 
-  const handleUpdateUser = async (updates: Partial<JobSeeker>) => {
-    try {
-      const response = await fetch("/api/users/jobseekers", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: detailUser?.id, ...updates }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setJobseekers(prev => prev.map(js => 
-          js.id === detailUser?.id ? { ...js, ...updates } : js
-        ));
-        if (detailUser) {
-          setDetailUser({ ...detailUser, ...updates });
-        }
-        showToast("User updated successfully", "success");
-      }
-    } catch (error) {
-      console.error("Error updating user:", error);
-      showToast("Failed to update user", "error");
-    }
+  const applyStatusChange = (reason: string) => {
+    if (!statusModal?.user) return;
+    const user = statusModal.user;
+    const action = statusModal.action;
+    const nextStatus: UserStatus =
+      action === "deactivate"
+        ? "inactive"
+        : action === "suspend"
+        ? "suspended"
+        : "active";
+    const note = {
+      id: `note-${Date.now()}`,
+      action: `${action} user`,
+      reason,
+      staffId: "staff-admin",
+      staffName: "Super Admin",
+      timestamp: new Date().toISOString(),
+    };
+    setJobseekers((prev) =>
+      prev.map((js) =>
+        js.id === user.id
+          ? {
+              ...js,
+              status: nextStatus,
+              staffNotes: [note, ...(js.staffNotes ?? [])],
+            }
+          : js
+      )
+    );
+    showToast(
+      `User ${
+        action === "deactivate"
+          ? "deactivated"
+          : action === "suspend"
+          ? "suspended"
+          : "activated"
+      } successfully`,
+      action === "deactivate" || action === "suspend" ? "warning" : "success"
+    );
+    setStatusModal(null);
+    setSelectedUser(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -335,7 +293,7 @@ export default function JobseekerDirectory() {
                   <tr
                     key={js.id}
                     className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group cursor-pointer"
-                    onClick={() => setDetailUser(js)}
+                    onClick={() => navigateToProfile(js)}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -400,7 +358,7 @@ export default function JobseekerDirectory() {
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <UserActionsMenu
                         user={js}
-                        onEdit={() => handleEdit(js)}
+                        onViewProfile={() => navigateToProfile(js)}
                         onChat={() => handleChat(js)}
                         onBlock={() => handleBlock(js)}
                         onSuspend={() => handleSuspend(js)}
@@ -427,35 +385,7 @@ export default function JobseekerDirectory() {
         )}
       </ComponentCard>
 
-      {/* Detail Modal with Edit Functionality */}
-      {detailUser && (
-        <JobSeekerDetailModal
-          user={detailUser}
-          isOpen={!!detailUser}
-          onClose={() => setDetailUser(null)}
-          onUpdate={handleUpdateUser}
-        />
-      )}
-
       {/* Modals */}
-      {showEditModal && selectedUser && (
-        <EditUserModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onSave={handleSaveEdit as any}
-          user={selectedUser}
-        />
-      )}
-
-      {showSuspendModal && selectedUser && (
-        <SuspendUserModal
-          isOpen={showSuspendModal}
-          onClose={() => setShowSuspendModal(false)}
-          onConfirm={handleConfirmSuspend}
-          userName={`${selectedUser.firstName} ${selectedUser.lastName}`}
-        />
-      )}
-
       {showDeleteModal && selectedUser && (
         <DeleteUserModal
           isOpen={showDeleteModal}
@@ -464,6 +394,26 @@ export default function JobseekerDirectory() {
           userName={`${selectedUser.firstName} ${selectedUser.lastName}`}
         />
       )}
+
+      <StatusReasonModal
+        isOpen={!!statusModal}
+        title={
+          statusModal?.action === "deactivate"
+            ? "Deactivate user"
+            : statusModal?.action === "suspend"
+            ? "Suspend user"
+            : "Activate user"
+        }
+        actionLabel={
+          statusModal?.action === "deactivate"
+            ? "Deactivate"
+            : statusModal?.action === "suspend"
+            ? "Suspend"
+            : "Activate"
+        }
+        onConfirm={applyStatusChange}
+        onClose={() => setStatusModal(null)}
+      />
 
       {/* Toast Notifications */}
       {toasts.map((toast) => (

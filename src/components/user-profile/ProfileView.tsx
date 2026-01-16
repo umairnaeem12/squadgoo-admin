@@ -7,6 +7,7 @@ import { useModal } from "@/hooks/useModal";
 import Image from "next/image";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
+import { useRef } from "react";
 import Label from "../form/Label";
 import TextArea from "../form/input/TextArea";
 import DatePicker from "../form/date-picker";
@@ -18,6 +19,19 @@ import type {
   FeedbackDirection,
 } from "@/types/profile";
 import { CalenderIcon } from "@/icons";
+
+type ChangeRequestStatus = "Pending" | "Approved" | "Rejected";
+type ChangeRequest = {
+  id: string;
+  fieldKey: string;
+  fieldLabel: string;
+  oldValue: string;
+  newValue: string;
+  reason: string;
+  userId: string;
+  status: ChangeRequestStatus;
+  submittedAt: string;
+};
 
 const ratingClasses = (rating: number) =>
   Array.from({ length: 5 }, (_, index) =>
@@ -56,10 +70,12 @@ const formatDateTime = (iso: string) =>
 const ProfileHeader: React.FC<{
   profile: ProfilePayload;
   onSocialSave: (values: { social: ProfileSocialLinks; bio: string }) => void;
-}> = ({ profile, onSocialSave }) => {
+  onAvatarChange: (nextAvatar: string) => void;
+}> = ({ profile, onSocialSave, onAvatarChange }) => {
   const { isOpen, openModal, closeModal } = useModal();
   const [social, setSocial] = useState(profile.social);
   const [bio, setBio] = useState(profile.bio);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setSocial(profile.social);
@@ -78,13 +94,43 @@ const ProfileHeader: React.FC<{
     closeModal();
   };
 
+  const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const nextUrl = URL.createObjectURL(file);
+    onAvatarChange(nextUrl);
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-white/5">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
         <div className="flex items-center gap-5">
-          <div className="h-24 w-24 overflow-hidden rounded-full border border-gray-200 dark:border-gray-800">
-            <Image src={profile.avatar} width={96} height={96} alt="avatar" />
-          </div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="group relative h-24 w-24 overflow-hidden rounded-full border border-gray-200 shadow-sm transition hover:shadow-md dark:border-gray-800"
+            aria-label="Update profile picture"
+          >
+            <div className="h-full w-full">
+              <Image
+                src={profile.avatar}
+                width={96}
+                height={96}
+                alt="avatar"
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
+              Update photo
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarSelect}
+            />
+          </button>
           <div>
             <h3 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
               {profile.name.full}
@@ -170,142 +216,173 @@ const ProfileHeader: React.FC<{
   );
 };
 
-const ProfilePersonal: React.FC<{ profile: ProfilePayload }> = ({ profile }) => {
-  const { isOpen, openModal, closeModal } = useModal();
-  const [request, setRequest] = useState("");
-  const [selectedFields, setSelectedFields] = useState<string[]>(["first"]);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+const ProfilePersonal: React.FC<{
+  profile: ProfilePayload;
+  onProfileUpdate: (next: ProfilePayload) => void;
+  onSubmitRequest: (req: ChangeRequest) => void;
+}> = ({ profile, onProfileUpdate, onSubmitRequest }) => {
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [draftValue, setDraftValue] = useState("");
+  const [reason, setReason] = useState("");
+  const restrictedFields = useMemo(
+    () => new Set(["email", "phone", "address", "city", "state", "country"]),
+    []
+  );
 
   const fields = useMemo(
     () => [
-      { label: "First Name", value: profile.name.first, key: "first" },
-      { label: "Last Name", value: profile.name.last, key: "last" },
+      { label: "Full name", value: profile.name.full, key: "full" },
       { label: "Email", value: profile.personalInfo.email, key: "email" },
       { label: "Phone", value: profile.personalInfo.phone, key: "phone" },
       { label: "Address", value: profile.personalInfo.address, key: "address" },
       { label: "City", value: profile.personalInfo.city, key: "city" },
       { label: "State", value: profile.personalInfo.state, key: "state" },
-      // { label: "ZIP Code", value: profile.personalInfo.zip, key: "zip" },
       { label: "Country", value: profile.personalInfo.country, key: "country" },
     ],
     [profile]
   );
 
-  const toggleFieldSelection = (key: string) => {
-    setSelectedFields((prev) =>
-      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
-    );
+  const startEdit = (fieldKey: string, value: string) => {
+    setEditingKey(fieldKey);
+    setDraftValue(value);
+    setReason("");
   };
 
-  const sendRequest = () => {
-    if (!selectedFields.length) {
-      return;
-    }
-    const fieldCount = selectedFields.length;
-    console.log("Request change", selectedFields, request.trim());
-    setRequest("");
-    setSelectedFields(["first"]);
-    closeModal();
-    setToastMessage(
-      `Request sent for ${fieldCount} field${fieldCount === 1 ? "" : "s"}.`
-    );
+  const cancelEdit = () => {
+    setEditingKey(null);
+    setDraftValue("");
+    setReason("");
   };
 
-  useEffect(() => {
-    if (!toastMessage) {
+  const handleSave = (fieldKey: string, label: string, oldValue: string) => {
+    const trimmed = draftValue.trim();
+    if (!trimmed || trimmed === oldValue) {
+      cancelEdit();
       return;
     }
-    const timer = setTimeout(() => setToastMessage(null), 3200);
-    return () => clearTimeout(timer);
-  }, [toastMessage]);
+
+    if (restrictedFields.has(fieldKey)) {
+      if (!reason.trim()) {
+        return;
+      }
+      const req: ChangeRequest = {
+        id: `req-${Date.now()}`,
+        fieldKey,
+        fieldLabel: label,
+        oldValue,
+        newValue: trimmed,
+        reason: reason.trim(),
+        userId: profile.id,
+        status: "Pending",
+        submittedAt: new Date().toISOString(),
+      };
+      onSubmitRequest(req);
+      cancelEdit();
+      return;
+    }
+
+    if (fieldKey === "full") {
+      const [first, ...rest] = trimmed.split(" ");
+      const last = rest.join(" ") || profile.name.last;
+      onProfileUpdate({
+        ...profile,
+        name: { ...profile.name, full: trimmed, first: first || profile.name.first, last },
+      });
+    } else {
+      onProfileUpdate({
+        ...profile,
+        personalInfo: {
+          ...profile.personalInfo,
+          [fieldKey]: trimmed,
+        },
+      } as ProfilePayload);
+    }
+    cancelEdit();
+  };
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-white/5">
-      <div className="grid gap-4 lg:items-center lg:grid-cols-2">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
             Personal information
           </h4>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Only super admins approve the requested changes.
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Inline edits save immediately for open fields. Restricted fields submit a request.
           </p>
         </div>
-        <Button size="sm" onClick={openModal}>
-          Request change
-        </Button>
       </div>
-      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
-        {fields.map((field) => (
-          <div key={field.key}>
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-400">
-              {field.label}
-            </p>
-            <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-              {field.value}
-            </p>
-          </div>
-        ))}
-      </div>
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-lg">
-        <div className="space-y-4">
-          <h4 className="text-xl font-semibold text-gray-900">Request a change</h4>
-          <div>
-            <Label>Fields</Label>
-            <p className="mb-2 text-xs text-gray-500">
-              Select every field that needs an update.
-            </p>
-            <div className="grid gap-2">
-              {fields.map((field) => {
-                const isSelected = selectedFields.includes(field.key);
-                return (
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {fields.map((field) => {
+          const isEditing = editingKey === field.key;
+          const isRestricted = restrictedFields.has(field.key);
+          return (
+            <div
+              key={field.key}
+              className="rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs uppercase tracking-[0.25em] text-gray-400">
+                    {field.label}
+                  </p>
+                  {isRestricted && (
+                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:bg-amber-500/20 dark:text-amber-200">
+                      Needs review
+                    </span>
+                  )}
+                </div>
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={cancelEdit}>
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSave(field.key, field.label, field.value)}
+                      disabled={isRestricted && !reason.trim()}
+                    >
+                      Submit
+                    </Button>
+                  </div>
+                ) : (
                   <button
-                    key={field.key}
                     type="button"
-                    onClick={() => toggleFieldSelection(field.key)}
-                    className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${isSelected
-                      ? "border-brand-400 bg-brand-50 text-brand-600"
-                      : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-                      }`}
+                    onClick={() => startEdit(field.key, field.value)}
+                    className="flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-500"
                   >
-                    <span>{field.label}</span>
-                    {isSelected && (
-                      <span className="text-brand-500">Selected</span>
-                    )}
+                    <span aria-hidden>✏️</span> Edit
                   </button>
-                );
-              })}
+                )}
+              </div>
+              <div className="mt-2">
+                {isEditing ? (
+                  <Input
+                    value={draftValue}
+                    onChange={(event) => setDraftValue(event.target.value)}
+                  />
+                ) : (
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {field.value}
+                  </p>
+                )}
+              </div>
+              {isEditing && isRestricted && (
+                <div className="mt-3 space-y-2">
+                  <Label>Reason for change</Label>
+                  <TextArea
+                    rows={2}
+                    value={reason}
+                    onChange={(value) => setReason(value)}
+                    placeholder="Explain why this needs to change. Required for restricted fields."
+                  />
+                </div>
+              )}
             </div>
-          </div>
-          <div>
-            <Label>Reason</Label>
-            <TextArea
-              value={request}
-              placeholder="Describe what needs to change"
-              rows={4}
-              onChange={setRequest}
-            />
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" size="sm" onClick={closeModal}>
-              Close
-            </Button>
-            <Button size="sm" onClick={sendRequest} disabled={!selectedFields.length}>
-              Send request
-            </Button>
-          </div>
-        </div>
-      </Modal>
-      {toastMessage && (
-        <div className="pointer-events-none fixed inset-0 z-[100000] flex justify-end items-start px-4 pt-6">
-          <div
-            role="status"
-            aria-live="polite"
-            className="rounded-2xl border border-brand-200 bg-white/95 px-4 py-3 text-sm font-medium text-brand-600 shadow-lg shadow-brand-400/30 backdrop-blur dark:border-brand-800 dark:bg-gray-900/90 dark:text-brand-400"
-          >
-            {toastMessage}
-          </div>
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -313,6 +390,76 @@ const ProfilePersonal: React.FC<{ profile: ProfilePayload }> = ({ profile }) => 
 type ReviewRatingFilter = "all" | "5" | "4" | "3" | "2" | "1";
 
 const reviewRatingValues: ReviewRatingFilter[] = ["5", "4", "3", "2", "1"];
+
+const ProfileRequests: React.FC<{
+  requests: ChangeRequest[];
+}> = ({ requests }) => {
+  const statusTone: Record<ChangeRequestStatus, string> = {
+    Pending:
+      "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-100",
+    Approved:
+      "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-100",
+    Rejected:
+      "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-100",
+  };
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-white/5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+            Requests
+          </h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Field-level change requests with old → new values and reason.
+          </p>
+        </div>
+        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-200">
+          {requests.length} total
+        </span>
+      </div>
+      <div className="mt-4 space-y-3">
+        {requests.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No requests submitted yet.
+          </p>
+        ) : (
+          requests.map((req) => (
+            <div
+              key={req.id}
+              className="rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {req.fieldLabel}
+                </p>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${statusTone[req.status]}`}
+                >
+                  {req.status}
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                <span className="rounded-full bg-gray-100 px-2 py-1 dark:bg-gray-800">
+                  Old: {req.oldValue}
+                </span>
+                <span className="rounded-full bg-brand-50 px-2 py-1 text-brand-700 dark:bg-brand-500/15 dark:text-brand-100">
+                  New: {req.newValue}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                Reason: {req.reason}
+              </p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">
+                Submitted {formatDateTime(req.submittedAt)}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
 
 const ProfileReviews: React.FC<{ reviews: ProfilePayload["reviews"] }> = ({
   reviews,
@@ -971,6 +1118,37 @@ const ProfileTasks: React.FC<{ tasks: ProfilePayload["tasks"] }> = ({ tasks }) =
 const ProfileView = () => {
   const { data } = useProfileData();
   const [profile, setProfile] = useState<ProfilePayload | null>(null);
+  const [requests, setRequests] = useState<ChangeRequest[]>([
+    {
+      id: "req-1",
+      fieldKey: "phone",
+      fieldLabel: "Phone",
+      oldValue: "+09 363 398 46",
+      newValue: "+09 555 111 22",
+      reason: "Primary number retired; need to move to company device.",
+      userId: "user-001",
+      status: "Pending",
+      submittedAt: new Date(Date.now() - 3600 * 1000).toISOString(),
+    },
+    {
+      id: "req-2",
+      fieldKey: "address",
+      fieldLabel: "Address",
+      oldValue: "54 Crown Road, Phoenix",
+      newValue: "22 Northbridge Ave, Phoenix",
+      reason: "Relocated to new apartment on Jan 5.",
+      userId: "user-001",
+      status: "Approved",
+      submittedAt: new Date(Date.now() - 86400 * 1000).toISOString(),
+    },
+  ]);
+  const [requestToast, setRequestToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!requestToast) return;
+    const timer = setTimeout(() => setRequestToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [requestToast]);
 
   useEffect(() => {
     if (data) {
@@ -993,13 +1171,35 @@ const ProfileView = () => {
         onSocialSave={({ social, bio }) =>
           setProfile((prev) => (prev ? { ...prev, social, bio } : prev))
         }
+        onAvatarChange={(nextAvatar) =>
+          setProfile((prev) => (prev ? { ...prev, avatar: nextAvatar } : prev))
+        }
       />
-      <ProfilePersonal profile={profile} />
+      <ProfilePersonal
+        profile={profile}
+        onProfileUpdate={(next) => setProfile(next)}
+        onSubmitRequest={(req) => {
+          setRequests((prev) => [req, ...prev]);
+          setRequestToast(`${req.fieldLabel} request submitted.`);
+        }}
+      />
+      <ProfileRequests requests={requests} />
       <div className="grid gap-6 xl:grid-cols-2">
         <ProfileTasks tasks={profile.tasks} />
         <ProfileReviews reviews={profile.reviews} />
       </div>
       <ProfileFeedback feedback={profile.feedback} />
+      {requestToast && (
+        <div className="pointer-events-none fixed inset-0 z-[100000] flex justify-end items-start px-4 pt-6">
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded-2xl border border-brand-200 bg-white/95 px-4 py-3 text-sm font-semibold text-brand-700 shadow-lg shadow-brand-400/30 backdrop-blur dark:border-brand-800 dark:bg-gray-900/90 dark:text-brand-200"
+          >
+            {requestToast}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,6 +4,7 @@
 import { useMemo, useRef, useState, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
 import DatePicker from "@/components/form/date-picker";
@@ -76,6 +77,33 @@ type Assignment = {
   assignee: string;
   assignedBy: string;
   assignedAt: string;
+};
+
+type AccessRequestStatus =
+  | "pending"
+  | "approved_full"
+  | "approved_limited"
+  | "denied"
+  | "expired";
+
+type AccessRequest = {
+  id: string;
+  staffId: string;
+  staffName: string;
+  role: string;
+  department: string;
+  rating: number;
+  requestedSection: string;
+  reason: string;
+  status: AccessRequestStatus;
+  submittedAt: string;
+  reviewer: string;
+  decisionNote?: string;
+  expiryAt?: string;
+  pastAccess: string;
+  currentPermissions: string[];
+  activitySummary: string;
+  accessHistory: string[];
 };
 
 const tabs: { id: WalletTab; label: string }[] = [
@@ -306,20 +334,89 @@ const staffDirectory: StaffMember[] = [
   { id: "st-8", name: "Zara Ali", department: "Risk", online: true },
 ];
 
+const initialAccessRequests: AccessRequest[] = [
+  {
+    id: "REQ-9301",
+    staffId: "st-2",
+    staffName: "Ravi Kumar",
+    role: "Finance Analyst",
+    department: "Finance",
+    rating: 4.6,
+    requestedSection: "SSG Coin",
+    reason: "Need SSG Coin access to reconcile a high-value withdrawal dispute.",
+    status: "pending",
+    submittedAt: "2027-04-01T08:20:00Z",
+    reviewer: "Super Admin",
+    pastAccess: "Had 30-minute conditional access during February audit.",
+    currentPermissions: ["Wallet exports (read-only)", "Finance tickets"],
+    activitySummary: "Resolved 6 finance tickets in last 24h, SLA 98%.",
+    accessHistory: [
+      "Mar 12: Access removed after shift end.",
+      "Feb 02: Conditional access expired automatically.",
+    ],
+  },
+  {
+    id: "REQ-9302",
+    staffId: "st-5",
+    staffName: "Hina Noor",
+    role: "Risk Ops Lead",
+    department: "Risk",
+    rating: 4.9,
+    requestedSection: "SSG Coin",
+    reason: "Investigating SG Coin risk anomalies flagged by monitoring.",
+    status: "approved_limited",
+    submittedAt: "2027-04-01T07:55:00Z",
+    reviewer: "Super Admin",
+    decisionNote: "Approved for short window to inspect anomalies.",
+    // Fixed timestamp to avoid SSR hydration mismatches from Date.now.
+    expiryAt: "2027-04-01T08:25:00Z",
+    pastAccess: "Granted full access during incident review last quarter.",
+    currentPermissions: ["Risk dashboard", "Dispute review"],
+    activitySummary: "Flagged 3 high-risk wallets in last 48h.",
+    accessHistory: [
+      "Apr 01: Conditional access approved for 30 minutes.",
+      "Mar 18: Full access revoked after incident closure.",
+    ],
+  },
+  {
+    id: "REQ-9303",
+    staffId: "st-6",
+    staffName: "Marcus Lee",
+    role: "Ops Supervisor",
+    department: "Operations",
+    rating: 4.3,
+    requestedSection: "SSG Coin",
+    reason: "Needs SG Coin visibility to confirm a partner payout.",
+    status: "denied",
+    submittedAt: "2027-03-31T18:10:00Z",
+    reviewer: "Super Admin",
+    decisionNote: "Outside scope; route via Finance.",
+    pastAccess: "No prior SSG Coin access.",
+    currentPermissions: ["Operations dashboard", "Payout queue (view)"],
+    activitySummary: "Handles escalations; 2 payouts reassigned today.",
+    accessHistory: [
+      "Mar 31: Request denied - not in Finance/Risk.",
+      "Feb 20: Asked for export; redirected to Finance.",
+    ],
+  },
+];
+
 const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("en-US", {
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
     month: "short",
     day: "numeric",
     year: "numeric",
-  });
+  }).format(new Date(value));
 
 const formatDateTime = (value: string) =>
-  new Date(value).toLocaleString("en-US", {
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  });
+  }).format(new Date(value));
 
 const getStatusClass = (status: WalletStatus) => {
   if (status === "hold") {
@@ -362,11 +459,35 @@ const getWithdrawalStatusClass = (status: WithdrawalRequest["status"]) => {
   }
   return "bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-200";
 };
+
+const accessStatusMeta: Record<
+  AccessRequestStatus,
+  { label: string; tone: string }
+> = {
+  pending: {
+    label: "Pending review",
+    tone: "bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-100",
+  },
+  approved_full: {
+    label: "Approved – Full Access",
+    tone: "bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-200",
+  },
+  approved_limited: {
+    label: "Approved – Time Limited",
+    tone: "bg-brand-50 text-brand-700 dark:bg-brand-500/20 dark:text-brand-200",
+  },
+  denied: {
+    label: "Denied",
+    tone: "bg-error-100 text-error-700 dark:bg-error-500/20 dark:text-error-200",
+  },
+  expired: {
+    label: "Expired (auto)",
+    tone: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300",
+  },
+};
 export default function AdminWalletPage() {
   const router = useRouter();
-  const [hasAccess, setHasAccess] = useState(false);
-  const [showAccessModal, setShowAccessModal] = useState(false);
-  const [accessReason, setAccessReason] = useState("");
+  const [hasAccess] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<WalletTab>("marketplace");
 
@@ -408,6 +529,20 @@ export default function AdminWalletPage() {
   const [assignTargetId, setAssignTargetId] = useState<string | null>(null);
   const [selectedDepartment, setSelectedDepartment] = useState(departments[0]);
   const [staffQuery, setStaffQuery] = useState("");
+  const [accessRequests, setAccessRequests] =
+    useState<AccessRequest[]>(initialAccessRequests);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
+    initialAccessRequests[0]?.id ?? null
+  );
+  const [requestForm, setRequestForm] = useState({
+    staffId: "st-9",
+    staffName: "Nadia Ali",
+    role: "Finance Ops",
+    department: "Finance",
+    reason: "",
+  });
+  const [decisionNote, setDecisionNote] = useState("");
+  const [limitMinutes, setLimitMinutes] = useState("15");
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -443,11 +578,132 @@ export default function AdminWalletPage() {
     return () => clearTimeout(timer);
   }, [toastMessage]);
 
-  const handleAccessRequest = () => {
-    setHasAccess(true);
-    setShowAccessModal(false);
-    setAccessReason("");
-    setToastMessage("Access request sent to the finance admin.");
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAccessRequests((prev) =>
+        prev.map((req) => {
+          if (
+            req.status === "approved_limited" &&
+            req.expiryAt &&
+            new Date(req.expiryAt).getTime() <= Date.now()
+          ) {
+            const note = "Conditional access expired automatically.";
+            return {
+              ...req,
+              status: "expired",
+              decisionNote: note,
+              accessHistory: [
+                `Access auto-expired ${formatDateTime(new Date().toISOString())}`,
+                ...req.accessHistory,
+              ],
+            };
+          }
+          return req;
+        })
+      );
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const selectedRequest =
+    accessRequests.find((item) => item.id === selectedRequestId) ||
+    accessRequests[0] ||
+    null;
+
+  const pendingCount = useMemo(
+    () => accessRequests.filter((req) => req.status === "pending").length,
+    [accessRequests]
+  );
+
+  const handleSubmitAccessRequest = () => {
+    if (!requestForm.staffId.trim() || !requestForm.staffName.trim() || !requestForm.role.trim()) {
+      setToastMessage("Fill Staff ID, name, and role to submit.");
+      return;
+    }
+    if (!requestForm.reason.trim()) {
+      setToastMessage("Add a reason for requesting SSG Coin access.");
+      return;
+    }
+    const now = new Date().toISOString();
+    const newRequest: AccessRequest = {
+      id: `REQ-${accessRequests.length + 9301}`,
+      staffId: requestForm.staffId.trim(),
+      staffName: requestForm.staffName.trim(),
+      role: requestForm.role.trim(),
+      department: requestForm.department,
+      rating: 4.5,
+      requestedSection: "SSG Coin",
+      reason: requestForm.reason.trim(),
+      status: "pending",
+      submittedAt: now,
+      reviewer: "Super Admin",
+      pastAccess: "No prior SSG Coin access for this staff member.",
+      currentPermissions: ["Finance tickets (view)", "Operations dashboard"],
+      activitySummary: "Recent activity will be shown here for review.",
+      accessHistory: [`Request submitted at ${formatDateTime(now)}`],
+    };
+    setAccessRequests((prev) => [newRequest, ...prev]);
+    setSelectedRequestId(newRequest.id);
+    setRequestForm((prev) => ({ ...prev, reason: "" }));
+    setToastMessage("Request submitted to Super Admin. Status: Pending.");
+  };
+
+  const updateRequestDecision = (
+    id: string,
+    status: AccessRequestStatus,
+    note?: string,
+    expiryAt?: string
+  ) => {
+    const decidedAt = new Date().toISOString();
+    setAccessRequests((prev) =>
+      prev.map((req) =>
+        req.id === id
+          ? {
+            ...req,
+            status,
+            decisionNote: note,
+            expiryAt,
+            reviewer: "Super Admin",
+            accessHistory: [
+              `${accessStatusMeta[status].label} at ${formatDateTime(decidedAt)}${note ? ` — ${note}` : ""
+              }${expiryAt ? ` (expires ${formatDateTime(expiryAt)})` : ""}`,
+              ...req.accessHistory,
+            ],
+          }
+          : req
+      )
+    );
+    setToastMessage(accessStatusMeta[status].label);
+  };
+
+  const handleApproveFull = () => {
+    if (!selectedRequest) return;
+    const note = decisionNote.trim() || "Full access granted by Super Admin.";
+    updateRequestDecision(selectedRequest.id, "approved_full", note);
+    setDecisionNote("");
+  };
+
+  const handleApproveLimited = () => {
+    if (!selectedRequest) return;
+    const minutes = Number.parseInt(limitMinutes, 10);
+    if (Number.isNaN(minutes) || minutes <= 0) {
+      setToastMessage("Add a valid access duration in minutes.");
+      return;
+    }
+    const expiry = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+    const note = decisionNote.trim() || `Time-bound access for ${minutes} minutes.`;
+    updateRequestDecision(selectedRequest.id, "approved_limited", note, expiry);
+    setDecisionNote("");
+  };
+
+  const handleDeny = () => {
+    if (!selectedRequest) return;
+    if (!decisionNote.trim()) {
+      setToastMessage("Denial requires a reason.");
+      return;
+    }
+    updateRequestDecision(selectedRequest.id, "denied", decisionNote.trim());
+    setDecisionNote("");
   };
 
   const handleRangeChange = (selectedDates: Date[], dateStr: string) => {
@@ -719,56 +975,6 @@ export default function AdminWalletPage() {
       : undefined;
 
 
-  if (!hasAccess) {
-    return (
-      <div className="p-2 md:p-4 space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Platform Wallet (SG Coins)
-        </h1>
-        <ComponentCard
-          title="Access restricted"
-          desc="Only finance team members can view wallet operations."
-        >
-          <div className="p-6 flex flex-col items-start gap-4">
-            <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-              <span className="rounded-full bg-gray-100 p-2 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                <Lock className="h-5 w-5" />
-              </span>
-              <p className="text-sm">
-                Your access request will be sent to a finance admin for approval.
-              </p>
-            </div>
-            <Button size="sm" onClick={() => setShowAccessModal(true)}>
-              Request access
-            </Button>
-          </div>
-        </ComponentCard>
-
-        <Modal isOpen={showAccessModal} onClose={() => setShowAccessModal(false)}>
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Request finance access
-            </h3>
-            <TextArea
-              rows={4}
-              value={accessReason}
-              onChange={setAccessReason}
-              placeholder="Explain why you need wallet access"
-            />
-            <div className="flex items-center justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowAccessModal(false)}>
-                Cancel
-              </Button>
-              <Button size="sm" onClick={handleAccessRequest}>
-                Send request
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      </div>
-    );
-  }
-
   return (
     <div className="p-2 md:p-4 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -814,6 +1020,21 @@ export default function AdminWalletPage() {
             label="Pending withdrawals"
             value="18,400 SG"
           />
+        </div>
+      </ComponentCard>
+
+      <ComponentCard
+        title="SSG Coin access control"
+        desc="Staff requests are reviewed by Super Admins with approvals, time limits, and denials."
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-3xl">
+            Move to the dedicated SSG Coin Access page to manage staff requests with full profile
+            context, audit log, and decision actions (full, time-limited, deny with reason).
+          </p>
+          <Link href="/AdminWallet/access-control">
+            <Button size="sm">Open access control</Button>
+          </Link>
         </div>
       </ComponentCard>
 

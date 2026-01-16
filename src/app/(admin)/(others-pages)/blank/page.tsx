@@ -6,13 +6,12 @@ import ComponentCard from "@/components/common/ComponentCard";
 import UserFiltersBar from "@/components/user-management/UserFiltersBar";
 import UserActionsMenu from "@/components/user-management/UserActionsMenu";
 import UserStatusBadge from "@/components/user-management/UserStatusBadge";
-import EditUserModal from "@/components/user-management/EditUserModal";
 import SuspendUserModal from "@/components/user-management/SuspendUserModal";
 import DeleteUserModal from "@/components/user-management/DeleteUserModal";
 import Pagination from "@/components/tables/Pagination";
 import Toast from "@/components/common/Toast";
 import { useToast } from "@/hooks/useToast";
-import { UserCircle, Mail, Phone, Calendar, MapPin, Users, CheckCircle2, Clock, XCircle, Briefcase, Wallet, BadgeCheck } from "lucide-react";
+import { UserCircle, Mail, Phone, Calendar, MapPin, CheckCircle2, Clock, XCircle, Briefcase, Wallet, BadgeCheck } from "lucide-react";
 import type { Individual, UserFilters, UserStatus } from "@/types/user-management";
 
 export default function IndividualsPage() {
@@ -22,10 +21,8 @@ export default function IndividualsPage() {
   const [selectedUser, setSelectedUser] = useState<Individual | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [detailUser, setDetailUser] = useState<Individual | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,31 +66,6 @@ export default function IndividualsPage() {
       console.error("Error fetching individuals:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleEdit = (user: Individual) => {
-    setSelectedUser(user);
-    setShowEditModal(true);
-  };
-
-  const handleSaveEdit = async (updates: Partial<Individual>) => {
-    try {
-      const response = await fetch("/api/users/individuals", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedUser?.id, ...updates }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        fetchIndividuals();
-        setShowEditModal(false);
-        showToast("Individual updated successfully", "success");
-      }
-    } catch (error) {
-      console.error("Error updating individual:", error);
-      showToast("Failed to update individual", "error");
     }
   };
 
@@ -176,6 +148,10 @@ export default function IndividualsPage() {
   const handleDelete = (user: Individual) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
+  };
+
+  const navigateToProfile = (user: Individual) => {
+    router.push(`/admin/profile/individual/${user.id}`);
   };
 
   const handleConfirmDelete = async () => {
@@ -327,7 +303,7 @@ export default function IndividualsPage() {
                   <tr
                     key={ind.id}
                     className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group cursor-pointer"
-                    onClick={() => setDetailUser(ind)}
+                    onClick={() => navigateToProfile(ind)}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -411,7 +387,7 @@ export default function IndividualsPage() {
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <UserActionsMenu
                         user={ind}
-                        onEdit={() => handleEdit(ind)}
+                        onViewProfile={() => navigateToProfile(ind)}
                         onChat={() => handleChat(ind)}
                         onBlock={() => handleBlock(ind)}
                         onSuspend={() => handleSuspend(ind)}
@@ -437,86 +413,7 @@ export default function IndividualsPage() {
           </div>
         )}
       </ComponentCard>
-
-      {/* Detail Modal */}
-      {detailUser && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-          onClick={() => setDetailUser(null)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
-          >
-            <div className="flex items-start justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-start gap-4">
-                <div className="bg-green-50 dark:bg-green-500/10 p-3 rounded-xl">
-                  <UserCircle className="text-green-600 dark:text-green-400 w-7 h-7" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {detailUser.firstName} {detailUser.lastName}
-                  </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {detailUser.location} • {detailUser.totalGigs} gigs completed
-                  </p>
-                  <div className="flex items-center gap-4 mt-2">
-                    <UserStatusBadge status={detailUser.status} size="md" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Joined {formatDate(detailUser.createdAt)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Email</label>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1">{detailUser.email}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Phone</label>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1">{detailUser.phone}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Total Gigs</label>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1">{detailUser.totalGigs}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Wallet Balance</label>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1">${detailUser.walletBalance}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 col-span-2">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">KYC Status</label>
-                  <p className="font-medium text-gray-900 dark:text-white mt-1 capitalize">{detailUser.kycStatus}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-gray-800 p-4 bg-gray-50 dark:bg-gray-950">
-              <button
-                onClick={() => setDetailUser(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Modals */}
-      {showEditModal && selectedUser && (
-        <EditUserModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onSave={handleSaveEdit as any}
-          user={selectedUser}
-        />
-      )}
-
       {showSuspendModal && selectedUser && (
         <SuspendUserModal
           isOpen={showSuspendModal}

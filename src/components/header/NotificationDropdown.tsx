@@ -38,6 +38,17 @@ export default function NotificationDropdown() {
     bell: <BellRing className="w-4 h-4 text-slate-500" />,
   };
 
+  const truncate = (text: string, max = 90) =>
+    text.length > max ? `${text.slice(0, max - 1)}…` : text;
+
+  const formatTime = (value: string) =>
+    new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(value));
+
   return (
     <div className="relative">
       <button
@@ -110,7 +121,7 @@ export default function NotificationDropdown() {
             </li>
           ) : (
             notifications.map((notification) => (
-              <li key={notification.id}>
+              <li key={notification.id} className="pb-2">
                 <DropdownItem
                   onItemClick={() => {
                     markRead(notification.id);
@@ -124,49 +135,49 @@ export default function NotificationDropdown() {
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
                     {iconMap[notification.icon]}
                   </span>
-                <span className="flex-1 min-w-0">
-                  <span className="flex items-center justify-between gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-                    <span className="truncate">{notification.title}</span>
-                    <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
-                      {notification.type}
+                  <span className="flex-1 min-w-0">
+                    <span className="flex items-center justify-between gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+                      <span className="truncate">{notification.title}</span>
+                      <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                        {notification.type}
+                      </span>
                     </span>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {truncate(notification.preview)}
+                    </p>
+                    <p className="mt-1 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                      {formatTime(notification.createdAt)}
+                    </p>
                   </span>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {notification.desc}
-                  </p>
-                  <p className="mt-1 text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                    {notification.time}
-                  </p>
-                </span>
-                <span className="flex flex-col items-end gap-2">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      toggleRead(notification.id);
-                    }}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-brand-300 hover:text-brand-600 dark:border-gray-700 dark:text-gray-400 dark:hover:text-brand-300"
-                    aria-label={notification.read ? "Mark unread" : "Mark read"}
-                  >
-                    {notification.read ? (
-                      <EyeOff className="h-3.5 w-3.5" />
-                    ) : (
-                      <Eye className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      remove(notification.id);
-                    }}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-red-300 hover:text-red-500 dark:border-gray-700 dark:text-gray-400 dark:hover:text-red-300"
-                    aria-label="Delete notification"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </span>
-              </DropdownItem>
+                  <span className="flex flex-col items-end gap-2">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleRead(notification.id);
+                      }}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-brand-300 hover:text-brand-600 dark:border-gray-700 dark:text-gray-400 dark:hover:text-brand-300"
+                      aria-label={notification.read ? "Mark unread" : "Mark read"}
+                    >
+                      {notification.read ? (
+                        <EyeOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <Eye className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        remove(notification.id);
+                      }}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-red-300 hover:text-red-500 dark:border-gray-700 dark:text-gray-400 dark:hover:text-red-300"
+                      aria-label="Delete notification"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                </DropdownItem>
               </li>
             ))
           )}

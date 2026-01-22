@@ -1,9 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
+import dynamic from "next/dynamic";
 import {
   EventInput,
   DateSelectArg,
@@ -12,6 +9,11 @@ import {
 } from "@fullcalendar/core";
 import { useModal } from "@/hooks/useModal";
 import { Modal } from "@/components/ui/modal";
+
+// Lazy-load FullCalendar to reduce initial bundle size
+const FullCalendar = dynamic(() => import("@fullcalendar/react"), {
+  ssr: false,
+}) as any;
 
 interface CalendarEvent extends EventInput {
   extendedProps: {
@@ -28,8 +30,9 @@ const Calendar: React.FC = () => {
   const [eventEndDate, setEventEndDate] = useState("");
   const [eventLevel, setEventLevel] = useState("");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const calendarRef = useRef<FullCalendar>(null);
+  const calendarRef = useRef<any>(null);
   const { isOpen, openModal, closeModal } = useModal();
+  const [plugins, setPlugins] = useState<any[]>([]);
 
   const calendarsEvents = {
     Danger: "danger",
@@ -39,6 +42,15 @@ const Calendar: React.FC = () => {
   };
 
   useEffect(() => {
+    // Dynamically import plugins
+    Promise.all([
+      import("@fullcalendar/daygrid"),
+      import("@fullcalendar/timegrid"),
+      import("@fullcalendar/interaction"),
+    ]).then(([dayGrid, timeGrid, interaction]) => {
+      setPlugins([dayGrid.default, timeGrid.default, interaction.default]);
+    });
+
     // Initialize with some events
     setEvents([
       {
@@ -123,10 +135,11 @@ const Calendar: React.FC = () => {
   return (
     <div className="rounded-2xl border  border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="custom-calendar">
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
+        {plugins.length > 0 && (
+          <FullCalendar
+            ref={calendarRef}
+            plugins={plugins}
+            initialView="dayGridMonth"
           headerToolbar={{
             left: "prev,next addEventButton",
             center: "title",
@@ -143,7 +156,8 @@ const Calendar: React.FC = () => {
               click: openModal,
             },
           }}
-        />
+          />
+        )}
       </div>
       <Modal
         isOpen={isOpen}

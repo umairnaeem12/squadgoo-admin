@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import StaffDashboard from "@/components/staff-dashboard/StaffDashboard";
+import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 
 export const metadata: Metadata = {
   title: "Staff Dashboard",
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function StaffDashboardPage() {
-  return <StaffDashboard />;
+  return (
+    <ProtectedAdminRoute>
+      <StaffDashboard />
+    </ProtectedAdminRoute>
+  );
 }

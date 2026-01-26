@@ -5,6 +5,7 @@ import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import { StaffRoleProvider } from '@/context/StaffRoleContext';
+import { AdminAuthProvider } from '@/context/AdminAuthContext';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -21,7 +22,9 @@ export default function RootLayout({
         <ThemeProvider>
           <NotificationProvider>
             <StaffRoleProvider>
-              <SidebarProvider>{children}</SidebarProvider>
+              <AdminAuthProvider>
+                <SidebarProvider>{children}</SidebarProvider>
+              </AdminAuthProvider>
             </StaffRoleProvider>
           </NotificationProvider>
         </ThemeProvider>
